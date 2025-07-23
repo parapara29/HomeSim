@@ -11,6 +11,8 @@ public class StudioController : MonoBehaviour
     // temp
     private Vector3Int roomSize = new Vector3Int(12, 12, 12);
 
+    public bool initializeOnStart = true;
+
     // end temp
 
     // View
@@ -40,21 +42,18 @@ public class StudioController : MonoBehaviour
         InitTouch();
         InitView();
 
-        Reset();
-
-        // Init
-        studioPanel.SetResetButtonActive(false);
-        studioPanel.SetMode(StudioMode.Type);
+        if (initializeOnStart)
+        {
+            OpenRoom("Room");
+            studioPanel.SetResetButtonActive(false);
+            studioPanel.SetMode(StudioMode.Type);
+        }
     }
 
     #region Init
 
     private void InitView()
     {
-        GameObject roomGO = Instantiate(Resources.Load("Prefabs/Room")) as GameObject;
-        room = roomGO.GetComponent<Room>();
-        room.Init(roomSize);
-
         camera = Camera.main.GetComponent<RoomCamera>();
         camera.Init();
         camera.OnCameraRotate = HandleCameraRotate;
@@ -66,6 +65,18 @@ public class StudioController : MonoBehaviour
 
         // TODO
         isRestricted = true;
+    }
+
+    public void OpenRoom(string prefabName)
+    {
+        if (room != null)
+            Destroy(room.gameObject);
+
+        GameObject roomGO = Instantiate(Resources.Load("Prefabs/" + prefabName)) as GameObject;
+        room = roomGO.GetComponent<Room>();
+        room.Init(roomSize);
+
+        Reset();
     }
 
     private void InitUI()
