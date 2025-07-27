@@ -547,8 +547,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -1294, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0.0024719238}
+  m_SizeDelta: {x: 0, y: 0.0050354}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &400041959
 MonoBehaviour:
@@ -601,7 +601,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
-  m_VerticalFit: 2
+  m_VerticalFit: 0
 --- !u!114 &400041962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -615,12 +615,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 20
-    m_Right: 20
-    m_Top: 40
-    m_Bottom: 20
+    m_Left: 0
+    m_Right: 0
+    m_Top: 200
+    m_Bottom: 5
   m_ChildAlignment: 1
-  m_Spacing: 10
+  m_Spacing: 11
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -640,6 +640,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7f8836ad331c85429b907d2577cc72e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rooms: []
 --- !u!1001 &401534137
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1093,7 +1094,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7e6b4cc2927741a690e3c989a39d1e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initializeOnStart: 1
+  initializeOnStart: 0
 --- !u!114 &1024179438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1101,7 +1102,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024179435}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb54466b2fd7d384ab1934c43ed0e196, type: 3}
   m_Name: 
