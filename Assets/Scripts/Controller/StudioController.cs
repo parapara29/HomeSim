@@ -36,11 +36,11 @@ public class StudioController : MonoBehaviour
     private bool isEditItemHandleDrag;
     private bool isEditItemHandleClick;
 
+    private bool initialized = false;
+
     private void Start()
     {
-        InitUI();
-        InitTouch();
-        InitView();
+        Initialize();
 
         if (initializeOnStart)
         {
@@ -48,6 +48,17 @@ public class StudioController : MonoBehaviour
             studioPanel.SetResetButtonActive(false);
             studioPanel.SetMode(StudioMode.Type);
         }
+    }
+
+    private void Initialize()
+    {
+        if (initialized) return;
+
+        InitUI();
+        InitTouch();
+        InitView();
+
+        initialized = true;
     }
 
     #region Init
@@ -77,7 +88,9 @@ public class StudioController : MonoBehaviour
 }
 
     public void OpenRoom(string prefabName)
-{
+    {
+    Initialize();
+
     if (room != null) Destroy(room.gameObject);
 
     GameObject prefab = Resources.Load<GameObject>("Prefabs/" + prefabName);
