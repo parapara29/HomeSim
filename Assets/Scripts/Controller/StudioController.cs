@@ -53,42 +53,77 @@ public class StudioController : MonoBehaviour
     #region Init
 
     private void InitView()
+{
+    camera = Camera.main.GetComponent<RoomCamera>();
+    camera.Init();
+    camera.SetCameraTransform();      // no callback yet
+
+    GameObject prefab = Resources.Load<GameObject>("Prefabs/GridGroup");
+    if (prefab == null)
     {
-        camera = Camera.main.GetComponent<RoomCamera>();
-        camera.Init();
-        camera.OnCameraRotate = HandleCameraRotate;
-        camera.SetCameraTransform();
-
-        GameObject gridGO = Instantiate(Resources.Load("Prefabs/GridGroup")) as GameObject;
-        gridGroup = gridGO.GetComponent<GridGroup>();
-        gridGroup.Init();
-
-        // TODO
-        isRestricted = true;
+        Debug.LogWarning("StudioController: Prefabs/GridGroup prefab not found – grid overlay disabled.");
     }
+    else
+    {
+        GameObject go = Instantiate(prefab);
+        gridGroup = go.GetComponent<GridGroup>();
+        if (gridGroup == null)
+            Debug.LogWarning("StudioController: GridGroup component missing on prefab!");
+        else
+            gridGroup.Init();
+    }
+
+    isRestricted = true;
+}
 
     public void OpenRoom(string prefabName)
+{
+    if (room != null) Destroy(room.gameObject);
+
+    GameObject prefab = Resources.Load<GameObject>("Prefabs/" + prefabName);
+    if (prefab == null)
     {
-        if (room != null)
-            Destroy(room.gameObject);
-
-        GameObject prefab = Resources.Load("Prefabs/" + prefabName) as GameObject;
-        if (prefab == null)
-        {
-            Debug.LogError($"StudioController.OpenRoom: prefab '{prefabName}' not found");
-            return;
-        }
-
-        GameObject roomGO = Instantiate(prefab) as GameObject;
-        room = roomGO.GetComponent<Room>();
-        room.Init(roomSize);
-
-        Reset();
+        Debug.LogError($"StudioController.OpenRoom: prefab '{prefabName}' not found in Resources/Prefabs");
+        return;
     }
+
+    GameObject roomGO = Instantiate(prefab);
+    room = roomGO.GetComponent<Room>();
+    if (room == null)
+    {
+        Debug.LogError($"StudioController.OpenRoom: prefab '{prefabName}' has no <Room> component!");
+        Destroy(roomGO);
+        return;
+    }
+
+    room.Init(roomSize);
+
+    camera.OnCameraRotate = HandleCameraRotate;   // subscribe after room exists
+    ResetState();                                 // ✅ renamed and null-safe
+}
 
     private void InitUI()
     {
-        studioPanel = GameObject.Find("/Canvas/StudioPanel").GetComponent<StudioPanel>();
+        GameObject canvas = GameObject.Find("Canvas");
+        if (canvas == null)
+        {
+            Debug.LogError("StudioController.InitUI: Canvas not found");
+            return;
+        }
+
+        Transform panelTransform = canvas.transform.Find("StudioPanel");
+        if (panelTransform == null)
+        {
+            Debug.LogError("StudioController.InitUI: StudioPanel not found");
+            return;
+        }
+
+        studioPanel = panelTransform.GetComponent<StudioPanel>();
+        if (studioPanel == null)
+        {
+            Debug.LogError("StudioController.InitUI: StudioPanel component missing");
+            return;
+        }
         studioPanel.Init();
         studioPanel.OnItemBeginDrag = HandleUIItemBeginDrag;
         studioPanel.OnBuildClick = PlaceWall;
@@ -237,15 +272,16 @@ public class StudioController : MonoBehaviour
     }
 
 
-    private void Reset()
-    {
-        isItemEdited = false;
+    private void ResetState()
+{
+    isItemEdited = false;
 
-        room.RefreshGrids(false);
-        currentItem = null;
-        editedItem = null;
-        gridGroup.SetActive(false);
-    }
+    if (room      != null) room.RefreshGrids(false);
+    if (gridGroup != null) gridGroup.SetActive(false);
+
+    currentItem = null;
+    editedItem  = null;
+}
 
     #region Room
 
@@ -349,7 +385,7 @@ public class StudioController : MonoBehaviour
         SuspendItem suspendItem = currentItem.gameObject.GetComponent<SuspendItem>();
         suspendItem.enabled = true;
 
-        Reset();
+        ResetState();
         studioPanel.Back();
     }
 
@@ -358,7 +394,7 @@ public class StudioController : MonoBehaviour
         if (!isItemEdited) return;
         Destroy(currentItem.gameObject);
 
-        Reset();
+        ResetState();
         studioPanel.Back();
     }
     private void RotateItem(float degree)

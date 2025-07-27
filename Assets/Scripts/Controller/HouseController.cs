@@ -12,100 +12,76 @@ public class HouseController : MonoBehaviour
     private StudioController studioController;
 
     /* --------------------------------------------------------------------- */
-    void Awake()
+    private void Awake ()
     {
-        // cache StudioController that sits on the same GameObject
         studioController = GetComponent<StudioController>();
-
-        // make sure StudioController keeps quiet until we enter a room
         if (studioController != null)
         {
-            studioController.initializeOnStart = false;
-            studioController.enabled = false;
+            studioController.initializeOnStart = false; // let us decide when to start
+            studioController.enabled = false;           // keep it dormant
         }
     }
 
     /* --------------------------------------------------------------------- */
-    void Start ()
+    private void Start ()
     {
-        /* ───────── 1  Spawn the house prefab ───────── */
-        var prefab = Resources.Load(housePrefabPath) as GameObject;
+        /* 1. Spawn the house prefab */
+        GameObject prefab = Resources.Load<GameObject>(housePrefabPath);
         if (prefab == null)
         {
-            Debug.LogError($"HouseController: could not load prefab “{housePrefabPath}” from a Resources folder.");
+            Debug.LogError($"HouseController: prefab not found at Resources/{housePrefabPath}");
             return;
         }
         house = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 
-        /* add click-to-rotate component */
-        var dragRotates = house.GetComponents<HouseDragRotate>();
-        HouseDragRotate dragRotate = null;
-        if (dragRotates.Length > 0)
-        {
-            dragRotate = dragRotates[0];
-            for (int i = 1; i < dragRotates.Length; i++)
-                Destroy(dragRotates[i]);
-        }
-        if (dragRotate == null)
-            dragRotate = house.AddComponent<HouseDragRotate>();
-        dragRotate.OnClick = ShowRoomPanel;
+        /* add / reuse HouseDragRotate (only one) */
+        HouseDragRotate drag = house.GetComponent<HouseDragRotate>();
+        if (drag == null) drag = house.AddComponent<HouseDragRotate>();
+        drag.OnClick = ShowRoomPanel;
 
-        /* ───────── 2  Locate UI panels ───────── */
-        var canvas = GameObject.Find("Canvas");
+        /* 2. Locate UI panels */
+        Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
         {
-            Debug.LogError("HouseController: ‘Canvas’ not found.");
+            Debug.LogError("HouseController: Canvas not found in scene.");
             return;
         }
 
-        housePanel = canvas.transform.Find("HousePanel")?.GetComponent<HousePanel>();
-        if (housePanel == null)
-        {
-            Debug.LogError("HouseController: ‘HousePanel’ not found (even if inactive).");
-            return;
-        }
-
+        housePanel  = canvas.transform.Find("HousePanel") ?.GetComponent<HousePanel>();
         studioPanel = canvas.transform.Find("StudioPanel")?.gameObject;
-        if (studioPanel == null)
+
+        if (housePanel == null || studioPanel == null)
         {
-            Debug.LogError("HouseController: 'StudioPanel' not found (even if inactive).");
+            Debug.LogError("HouseController: HousePanel or StudioPanel missing in Canvas.");
             return;
         }
 
-        housePanel.Init();      // wires buttons
-        housePanel.Hide();      // keep hidden until player clicks the house
+        housePanel.Init();
+        housePanel.Hide();                     // start hidden
         housePanel.OnRoomClick = OpenRoom;
 
-        /* ensure StudioPanel is hidden at start */
-        if (studioPanel != null) studioPanel.SetActive(false);
+        studioPanel.SetActive(false);          // hide Studio HUD until inside a room
     }
-
     /* --------------------------------------------------------------------- */
     /*  called by HouseDragRotate when player      *
      *  clicks (quick tap, not drag-rotate)        */
     private void ShowRoomPanel ()
     {
-        if (housePanel  != null) housePanel.Show();
-        if (studioPanel != null) studioPanel.SetActive(false);
+        housePanel .Show();
+        studioPanel.SetActive(false);
     }
 
     /*  called by HousePanel when a button pressed */
-    private void OpenRoom (string roomName)
-{
-    if (house != null) Destroy(house);
+    private void OpenRoom (string prefabName)  // e.g. "Room" or "Bedroom"
+    {
+        if (house != null) Destroy(house);
 
-    /* 1️⃣  show the panel first (now GameObject.Find can see it) */
-    if (studioPanel != null) studioPanel.SetActive(true);
+        studioPanel.SetActive(true);           // show HUD first
 
-        /* 2️⃣  enable the script – Start() will run once here */
-        if (studioController != null)
-        {
-            studioController.enabled = true;      // Start() executes now
-            string prefabPath = roomName.Contains("/") ? roomName :  roomName;  // then load the room
-            studioController.OpenRoom(prefabPath);
+        if (studioController != null && !studioController.enabled)
+            studioController.enabled = true;   // Start() runs now
+
+        studioController?.OpenRoom(prefabName); // ← pass raw name ONLY
+        housePanel.Hide();
     }
-
-    if (housePanel != null) housePanel.Hide();
-}
-
 }
