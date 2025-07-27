@@ -88,24 +88,24 @@ public class StudioController : MonoBehaviour
 
     private void InitUI()
     {
-        GameObject canvas = GameObject.Find("Canvas");
-        if (canvas == null)
+        GameObject canvasGO = GameObject.Find("Canvas");
+        if (canvasGO == null)
         {
-            Debug.LogError("StudioController.InitUI: Canvas not found");
+            Debug.LogError("StudioController: 'Canvas' not found.");
             return;
         }
 
-        Transform panelTransform = canvas.transform.Find("StudioPanel");
-        if (panelTransform == null)
+        GameObject panelGO = canvasGO.transform.Find("StudioPanel")?.gameObject;
+        if (panelGO == null)
         {
-            Debug.LogError("StudioController.InitUI: StudioPanel not found");
+            Debug.LogError("StudioController: 'StudioPanel' not found (even if inactive).");
             return;
         }
 
-        studioPanel = panelTransform.GetComponent<StudioPanel>();
+        studioPanel = panelGO.GetComponent<StudioPanel>();
         if (studioPanel == null)
         {
-            Debug.LogError("StudioController.InitUI: StudioPanel component missing");
+            Debug.LogError("StudioController: StudioPanel component missing.");
             return;
         }
         studioPanel.Init();
