@@ -36,12 +36,15 @@ public class StudioController : MonoBehaviour
     private bool isEditItemHandleDrag;
     private bool isEditItemHandleClick;
 
-    private void Start()
+    private void Awake()
     {
         InitUI();
         InitTouch();
         InitView();
+    }
 
+    private void Start()
+    {
         if (initializeOnStart)
         {
             OpenRoom("Room");
@@ -239,6 +242,7 @@ public class StudioController : MonoBehaviour
 
     private void Reset()
     {
+        Debug.Assert(gridGroup != null, "StudioController.Reset: gridGroup is not initialized");
         isItemEdited = false;
 
         room.RefreshGrids(false);
