@@ -88,7 +88,26 @@ public class StudioController : MonoBehaviour
 
     private void InitUI()
     {
-        studioPanel = GameObject.Find("/Canvas/StudioPanel").GetComponent<StudioPanel>();
+        GameObject canvasGO = GameObject.Find("Canvas");
+        if (canvasGO == null)
+        {
+            Debug.LogError("StudioController: 'Canvas' not found.");
+            return;
+        }
+
+        GameObject panelGO = canvasGO.transform.Find("StudioPanel")?.gameObject;
+        if (panelGO == null)
+        {
+            Debug.LogError("StudioController: 'StudioPanel' not found (even if inactive).");
+            return;
+        }
+
+        studioPanel = panelGO.GetComponent<StudioPanel>();
+        if (studioPanel == null)
+        {
+            Debug.LogError("StudioController: StudioPanel component missing.");
+            return;
+        }
         studioPanel.Init();
         studioPanel.OnItemBeginDrag = HandleUIItemBeginDrag;
         studioPanel.OnBuildClick = PlaceWall;
