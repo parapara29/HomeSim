@@ -65,6 +65,13 @@ public class HouseController : MonoBehaviour
             return;
         }
 
+        studioPanel = canvas.transform.Find("StudioPanel")?.gameObject;
+        if (studioPanel == null)
+        {
+            Debug.LogError("HouseController: 'StudioPanel' not found (even if inactive).");
+            return;
+        }
+
         housePanel.Init();      // wires buttons
         housePanel.Hide();      // keep hidden until player clicks the house
         housePanel.OnRoomClick = OpenRoom;
