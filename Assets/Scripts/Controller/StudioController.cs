@@ -195,7 +195,8 @@ public class StudioController : MonoBehaviour
     private void HandleCameraRotate(float angle)
     {
         angle = Maths.mod(angle, 360);
-        room.RefreshByAngle(angle);
+        if (room != null)
+            room.RefreshByAngle(angle);
         studioPanel.SetRotateButtonRotation(angle);
     }
 
