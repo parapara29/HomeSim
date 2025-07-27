@@ -36,12 +36,15 @@ public class StudioController : MonoBehaviour
     private bool isEditItemHandleDrag;
     private bool isEditItemHandleClick;
 
-    private void Start()
+    private void Awake()
     {
         InitUI();
         InitTouch();
         InitView();
+    }
 
+    private void Start()
+    {
         if (initializeOnStart)
         {
             OpenRoom("Room");
