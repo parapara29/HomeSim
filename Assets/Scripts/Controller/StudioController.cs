@@ -242,6 +242,7 @@ public class StudioController : MonoBehaviour
 
     private void Reset()
     {
+        Debug.Assert(gridGroup != null, "StudioController.Reset: gridGroup is not initialized");
         isItemEdited = false;
 
         room.RefreshGrids(false);
