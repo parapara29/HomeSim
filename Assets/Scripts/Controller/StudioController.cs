@@ -72,7 +72,14 @@ public class StudioController : MonoBehaviour
         if (room != null)
             Destroy(room.gameObject);
 
-        GameObject roomGO = Instantiate(Resources.Load("Prefabs/" + prefabName)) as GameObject;
+        GameObject prefab = Resources.Load("Prefabs/" + prefabName) as GameObject;
+        if (prefab == null)
+        {
+            Debug.LogError($"StudioController.OpenRoom: prefab '{prefabName}' not found");
+            return;
+        }
+
+        GameObject roomGO = Instantiate(prefab) as GameObject;
         room = roomGO.GetComponent<Room>();
         room.Init(roomSize);
 
@@ -195,7 +202,8 @@ public class StudioController : MonoBehaviour
     private void HandleCameraRotate(float angle)
     {
         angle = Maths.mod(angle, 360);
-        room.RefreshByAngle(angle);
+        if (room != null)
+            room.RefreshByAngle(angle);
         studioPanel.SetRotateButtonRotation(angle);
     }
 

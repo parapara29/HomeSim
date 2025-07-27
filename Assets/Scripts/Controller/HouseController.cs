@@ -19,8 +19,10 @@ public class HouseController : MonoBehaviour
 
         // make sure StudioController keeps quiet until we enter a room
         if (studioController != null)
+        {
             studioController.initializeOnStart = false;
             studioController.enabled = false;
+        }
     }
 
     /* --------------------------------------------------------------------- */
@@ -36,7 +38,16 @@ public class HouseController : MonoBehaviour
         house = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 
         /* add click-to-rotate component */
-        var dragRotate = house.AddComponent<HouseDragRotate>();
+        var dragRotates = house.GetComponents<HouseDragRotate>();
+        HouseDragRotate dragRotate = null;
+        if (dragRotates.Length > 0)
+        {
+            dragRotate = dragRotates[0];
+            for (int i = 1; i < dragRotates.Length; i++)
+                Destroy(dragRotates[i]);
+        }
+        if (dragRotate == null)
+            dragRotate = house.AddComponent<HouseDragRotate>();
         dragRotate.OnClick = ShowRoomPanel;
 
         /* ───────── 2  Locate UI panels ───────── */
@@ -54,9 +65,10 @@ public class HouseController : MonoBehaviour
             return;
         }
 
-        if (housePanel == null)
+        studioPanel = canvas.transform.Find("StudioPanel")?.gameObject;
+        if (studioPanel == null)
         {
-            Debug.LogError("HouseController: couldn’t find Canvas/HousePanel. Check hierarchy spelling.");
+            Debug.LogError("HouseController: 'StudioPanel' not found (even if inactive).");
             return;
         }
 
@@ -85,11 +97,12 @@ public class HouseController : MonoBehaviour
     /* 1️⃣  show the panel first (now GameObject.Find can see it) */
     if (studioPanel != null) studioPanel.SetActive(true);
 
-    /* 2️⃣  enable the script – Start() will run once here */
-    if (studioController != null)
-    {
-        studioController.enabled = true;      // Start() executes now
-        studioController.OpenRoom(roomName);  // then load the room
+        /* 2️⃣  enable the script – Start() will run once here */
+        if (studioController != null)
+        {
+            studioController.enabled = true;      // Start() executes now
+            string prefabPath = roomName.Contains("/") ? roomName :  roomName;  // then load the room
+            studioController.OpenRoom(prefabPath);
     }
 
     if (housePanel != null) housePanel.Hide();
