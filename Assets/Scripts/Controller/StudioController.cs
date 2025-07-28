@@ -113,7 +113,12 @@ public class StudioController : MonoBehaviour
 
     camera.OnCameraRotate = HandleCameraRotate;   // subscribe after room exists
     ResetState();                                 // ✅ renamed and null-safe
-}
+ }
+
+    public void HideRoom()
+    {
+        if (room != null) room.gameObject.SetActive(false);
+    }
 
     private void InitUI()
     {
@@ -160,6 +165,11 @@ public class StudioController : MonoBehaviour
         studioPanel.OnTypeClick = () =>
         {
             isOverUI = true;
+        };
+
+        studioPanel.OnBackClick = () =>
+        {
+            GetComponent<HouseController>()?.ReturnToHouse();
         };
 
     }

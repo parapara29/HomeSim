@@ -84,4 +84,20 @@ public class HouseController : MonoBehaviour
         studioController?.OpenRoom(prefabName); // ← pass raw name ONLY
         housePanel.Hide();
     }
+
+    public void ReturnToHouse()
+    {
+        studioPanel.SetActive(false);
+        studioController.HideRoom();
+        if (house == null) {
+            var prefab = Resources.Load<GameObject>(housePrefabPath);
+            house = Instantiate(prefab);
+            var drag = house.GetComponent<HouseDragRotate>() ??
+                       house.AddComponent<HouseDragRotate>();
+            drag.OnClick = ShowRoomPanel;
+        } else {
+            house.SetActive(true);
+        }
+        housePanel.Show();
+    }
 }
