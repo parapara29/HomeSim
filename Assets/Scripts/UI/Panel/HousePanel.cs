@@ -12,8 +12,15 @@ public struct RoomEntry
 public class HousePanel : MonoBehaviour
 {
     public RoomEntry[] rooms;    // map UI buttons to prefab names
-    
+
     public Action<string> OnRoomClick;
+
+    public Action OnBackClick
+    {
+        set { backButton.onClick.AddListener(() => value()); }
+    }
+
+    private Button backButton;
 
     
     public void Init()
@@ -22,6 +29,7 @@ public class HousePanel : MonoBehaviour
         {
             new RoomEntry { buttonName = "Bedroom", prefabName = "Room" }
         };
+        backButton = transform.Find("BackButton").GetComponent<Button>();
         foreach (var entry in rooms)
         {
             Transform t = transform.Find(entry.buttonName + "Button");

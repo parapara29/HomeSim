@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-100)]
 public class HouseController : MonoBehaviour
@@ -59,6 +60,10 @@ public class HouseController : MonoBehaviour
         housePanel.Init();
         housePanel.Hide();                     // start hidden
         housePanel.OnRoomClick = OpenRoom;
+        housePanel.OnBackClick = () =>
+        {
+            ReturnToHouse();
+        };
 
         studioPanel.SetActive(false);          // hide Studio HUD until inside a room
     }
@@ -83,5 +88,10 @@ public class HouseController : MonoBehaviour
 
         studioController?.OpenRoom(prefabName); // ← pass raw name ONLY
         housePanel.Hide();
+    }
+
+    public void ReturnToHouse()
+    {
+        SceneManager.LoadScene("Start");
     }
 }

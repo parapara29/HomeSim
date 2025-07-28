@@ -28,6 +28,7 @@ public class StudioPanel : MonoBehaviour
     private Button placeButton;
     private Button deleteButton;
     private RotateButton rotateButton;
+    private Button backButton;
 
     private Button wallButton;
     private Button floorButton;
@@ -121,6 +122,11 @@ public class StudioPanel : MonoBehaviour
         }
     }
 
+    public Action OnBackClick
+    {
+        set { backButton.onClick.AddListener(() => value()); }
+    }
+
     #endregion
     public void Init()
     {
@@ -144,6 +150,8 @@ public class StudioPanel : MonoBehaviour
         wallButton = typeView.Find("WallButton").GetComponent<Button>();
         floorButton = typeView.Find("FloorButton").GetComponent<Button>();
         itemButton = typeView.Find("ItemButton").GetComponent<Button>();
+
+        backButton = transform.Find("BackButton").GetComponent<Button>();
 
     }
 
