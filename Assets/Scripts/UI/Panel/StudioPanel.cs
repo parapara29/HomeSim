@@ -228,6 +228,31 @@ public class StudioPanel : MonoBehaviour
         resetButton.gameObject.SetActive(isActive);
     }
 
+    private void Update()
+    {
+        if (mode != StudioMode.SelectItem) return;
+        if (!Input.GetMouseButtonDown(0)) return;
+
+        PointerEventData ped = new PointerEventData(EventSystem.current)
+        {
+            position = Input.mousePosition
+        };
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(ped, results);
+        bool clickedItem = false;
+        foreach (var r in results)
+        {
+            if (r.gameObject.GetComponentInParent<DragItemCell>() != null)
+            {
+                clickedItem = true;
+                break;
+            }
+        }
+        if (!clickedItem)
+        {
+            Back();
+        }
+    }
 
     #endregion
 }
