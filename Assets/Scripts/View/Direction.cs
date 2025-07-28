@@ -23,6 +23,12 @@ public class Direction
     public static Direction H = new Direction(7, new Vector3(-1, 0, 1));
 
     private static Direction[] directions = { A, B, C, D, E, F, G, H };
+
+    public static Direction FromValue(int value)
+    {
+        value = Mathf.Abs(value) % directions.Length;
+        return directions[value];
+    }
     public int Value;
     public Vector3 Vector;
 
