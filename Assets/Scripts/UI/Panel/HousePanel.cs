@@ -42,6 +42,11 @@ public class HousePanel : MonoBehaviour
             Button btn = t.GetComponent<Button>();
             string prefab = entry.prefabName;
             btn.onClick.AddListener(() => OnRoomClick?.Invoke(prefab));
+
+            Image img = t.GetComponent<Image>();
+            Sprite preview = RoomPreview.Get(prefab);
+            if (img != null && preview != null)
+                img.sprite = preview;
         }
     }
 
