@@ -9,6 +9,9 @@ public class HouseDragRotate : MonoBehaviour,
 
     [SerializeField] float rotationSpeed = 0.2f;   // degrees per pixel
     [SerializeField] float clickThreshold = 8f;    // pixels
+    [SerializeField] float damping = 0.9f;
+
+    float velocity;
 
     Vector2 downPos;
     bool    dragged;
@@ -25,7 +28,8 @@ public class HouseDragRotate : MonoBehaviour,
     public void OnDrag(PointerEventData e)
     {
         Vector2 delta = e.delta;
-        transform.Rotate(Vector3.up, -delta.x * rotationSpeed, Space.World);
+        velocity = delta.x / Time.deltaTime;
+        transform.Rotate(Vector3.up, -velocity * rotationSpeed * Time.deltaTime, Space.World);
         dragged = true;
     }
 
@@ -36,5 +40,14 @@ public class HouseDragRotate : MonoBehaviour,
         // treat as click if player didn’t drag or moved very little
         if (!dragged || sqr <= clickThreshold * clickThreshold)
             OnClick?.Invoke();
+    }
+
+    void Update()
+    {
+        if (Mathf.Abs(velocity) > 0.001f)
+        {
+            transform.Rotate(Vector3.up, -velocity * rotationSpeed * Time.deltaTime, Space.World);
+            velocity *= damping;
+        }
     }
 }
