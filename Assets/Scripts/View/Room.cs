@@ -216,6 +216,21 @@ public class Room : MonoBehaviour
         wallMaterial.SetTexture("_DetailTex", tex);
     }
 
+    public List<ItemSaveData> GetItemStates()
+    {
+        List<ItemSaveData> states = new List<ItemSaveData>();
+        foreach (var obj in items)
+        {
+            if (obj == null) continue;
+            ItemSaveData data = new ItemSaveData();
+            data.prefab = obj.name;
+            data.position = obj.Item.Position;
+            data.direction = obj.Item.Dir.Value;
+            states.Add(data);
+        }
+        return states;
+    }
+
     private bool ItemXYZ(Item item, out int minX, out int maxX, out int minY, out int maxY, out int minZ, out int maxZ)
     {
         Vector3Int rotateSize = item.RotateSize;
