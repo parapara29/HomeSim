@@ -118,6 +118,20 @@ public class Room : MonoBehaviour
         return floor;
     }
 
+    public List<ItemSaveData> GetItemStates()
+    {
+        List<ItemSaveData> states = new List<ItemSaveData>();
+        foreach (var item in items)
+        {
+            ItemSaveData data = new ItemSaveData();
+            data.prefab = item.name;
+            data.position = item.Item.Position;
+            data.direction = item.Item.Dir.Value;
+            states.Add(data);
+        }
+        return states;
+    }
+
 
     public void PlaceItem(ItemObject item)
     {

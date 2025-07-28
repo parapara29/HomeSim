@@ -26,6 +26,12 @@ public class Direction
     public int Value;
     public Vector3 Vector;
 
+    public static Direction FromValue(int value)
+    {
+        value = (int)Maths.mod(value, directions.Length);
+        return directions[value];
+    }
+
     public static Direction Degree(float degree)
     {
         int index = ((int)degree / 90) * 2;
