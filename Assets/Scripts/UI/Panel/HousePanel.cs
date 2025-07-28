@@ -22,6 +22,19 @@ public class HousePanel : MonoBehaviour
 
     private Button backButton;
 
+    private void UpdateRoomPreviews()
+    {
+        foreach (var entry in rooms)
+        {
+            Transform t = transform.Find(entry.buttonName + "Button");
+            if (t == null) continue;
+            Image img = t.GetComponent<Image>();
+            Sprite preview = RoomPreview.Get(entry.prefabName);
+            if (img != null && preview != null)
+                img.sprite = preview;
+        }
+    }
+
     
     public void Init()
     {
@@ -43,10 +56,12 @@ public class HousePanel : MonoBehaviour
             string prefab = entry.prefabName;
             btn.onClick.AddListener(() => OnRoomClick?.Invoke(prefab));
         }
+        UpdateRoomPreviews();
     }
 
     public void Show()
     {
+        UpdateRoomPreviews();
         gameObject.SetActive(true);
     }
 

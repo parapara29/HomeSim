@@ -24,6 +24,8 @@ public class StudioController : MonoBehaviour
     private EditedItem editedItem;
     private GridGroup gridGroup;
 
+    private string currentPrefabName;
+
     // UI
     private StudioPanel studioPanel;
 
@@ -89,7 +91,9 @@ public class StudioController : MonoBehaviour
 
     public void OpenRoom(string prefabName)
     {
-    Initialize();
+        Initialize();
+
+        currentPrefabName = prefabName;
 
     if (room != null) Destroy(room.gameObject);
 
@@ -171,10 +175,33 @@ public class StudioController : MonoBehaviour
 
         studioPanel.OnBackClick = () =>
         {
-            SaveRoomState();
-            GetComponent<HouseController>()?.ReturnToHouse();
+            StartCoroutine(BackWithPreview());
         };
 
+    }
+
+    private IEnumerator BackWithPreview()
+    {
+        SaveRoomState();
+        yield return new WaitForEndOfFrame();
+        Texture2D tex = ScreenCapture.CaptureScreenshotAsTexture();
+        Texture2D cropped = CropCenter(tex, 512, 512);
+        RoomPreview.Set(currentPrefabName, cropped);
+        Destroy(tex);
+        GetComponent<HouseController>()?.ReturnToHouse();
+    }
+
+    private Texture2D CropCenter(Texture2D source, int width, int height)
+    {
+        int x = Mathf.Max(0, (source.width - width) / 2);
+        int y = Mathf.Max(0, (source.height - height) / 2);
+        int w = Mathf.Min(width, source.width);
+        int h = Mathf.Min(height, source.height);
+        Color[] pixels = source.GetPixels(x, y, w, h);
+        Texture2D result = new Texture2D(w, h);
+        result.SetPixels(pixels);
+        result.Apply();
+        return result;
     }
 
     private void InitTouch()
