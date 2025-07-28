@@ -113,7 +113,16 @@ public class StudioController : MonoBehaviour
 
     camera.OnCameraRotate = HandleCameraRotate;   // subscribe after room exists
     ResetState();                                 // ✅ renamed and null-safe
-}
+    }
+
+    public void CloseRoom()
+    {
+        if (room != null)
+        {
+            room.gameObject.SetActive(false);
+        }
+        ResetState();
+    }
 
     private void InitUI()
     {

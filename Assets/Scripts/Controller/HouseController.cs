@@ -60,6 +60,10 @@ public class HouseController : MonoBehaviour
         housePanel.Hide();                     // start hidden
         housePanel.OnRoomClick = OpenRoom;
 
+        StudioPanel panelComp = studioPanel.GetComponent<StudioPanel>();
+        if (panelComp != null)
+            panelComp.OnBackClick = ReturnToHouse;
+
         studioPanel.SetActive(false);          // hide Studio HUD until inside a room
     }
     /* --------------------------------------------------------------------- */
@@ -83,5 +87,12 @@ public class HouseController : MonoBehaviour
 
         studioController?.OpenRoom(prefabName); // ← pass raw name ONLY
         housePanel.Hide();
+    }
+
+    private void ReturnToHouse ()
+    {
+        studioPanel.SetActive(false);
+        housePanel.Show();
+        studioController?.CloseRoom();
     }
 }

@@ -32,6 +32,7 @@ public class StudioPanel : MonoBehaviour
     private Button wallButton;
     private Button floorButton;
     private Button itemButton;
+    private Button backButton;
 
     private ItemPO[] itemCellViewData;
 
@@ -121,6 +122,17 @@ public class StudioPanel : MonoBehaviour
         }
     }
 
+    public Action OnBackClick
+    {
+        set
+        {
+            backButton.onClick.AddListener(() =>
+            {
+                value();
+            });
+        }
+    }
+
     #endregion
     public void Init()
     {
@@ -144,6 +156,7 @@ public class StudioPanel : MonoBehaviour
         wallButton = typeView.Find("WallButton").GetComponent<Button>();
         floorButton = typeView.Find("FloorButton").GetComponent<Button>();
         itemButton = typeView.Find("ItemButton").GetComponent<Button>();
+        backButton = transform.Find("BackButton")?.GetComponent<Button>();
 
     }
 
