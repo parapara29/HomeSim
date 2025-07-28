@@ -111,9 +111,11 @@ public class StudioController : MonoBehaviour
 
     room.Init(roomSize);
 
+    LoadRoomState();
+
     camera.OnCameraRotate = HandleCameraRotate;   // subscribe after room exists
     ResetState();                                 // ✅ renamed and null-safe
- }
+}
 
     public void HideRoom()
     {
@@ -169,6 +171,7 @@ public class StudioController : MonoBehaviour
 
         studioPanel.OnBackClick = () =>
         {
+            SaveRoomState();
             GetComponent<HouseController>()?.ReturnToHouse();
         };
 
@@ -903,6 +906,34 @@ public class StudioController : MonoBehaviour
          (int)Mathf.Round(itemPosition.x + 0.5f * roomSize.x),
          (int)Mathf.Round(itemPosition.y),
          (int)Mathf.Round(itemPosition.z + 0.5f * roomSize.z));
+    }
+
+    private void SaveRoomState()
+    {
+        if (room == null) return;
+        List<ItemSaveData> items = room.GetItemStates();
+        RoomSave.Save(items);
+    }
+
+    private void LoadRoomState()
+    {
+        if (room == null) return;
+        List<ItemSaveData> states = RoomSave.Load();
+        foreach (var state in states)
+        {
+            ItemPO po = ItemData.GetByName(state.prefab);
+            if (po == null) continue;
+            GameObject itemGO = Instantiate(Resources.Load("Prefabs/Items/" + state.prefab)) as GameObject;
+            ItemObject obj = itemGO.AddComponent<ItemObject>();
+            obj.Init(po);
+            SuspendItem suspend = itemGO.AddComponent<SuspendItem>();
+            suspend.Init();
+            suspend.OnClick = ClickItem;
+            obj.SetDir(Direction.FromValue(state.direction));
+            obj.SetPosition(state.position);
+            obj.Item.RoomPosition = roomPosition(obj.Item, room.Size, state.position);
+            room.PlaceItem(obj);
+        }
     }
     private void conflictSpaceToGrids(Item item, List<Vector3Int> spaces, out HashSet<Vector2Int> xzGrids, out HashSet<Vector2Int> xyGrids, out HashSet<Vector2Int> zyGrids)
     {

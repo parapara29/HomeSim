@@ -56,4 +56,15 @@ public class ItemData : IData<ItemData>
         return items;
     }
 
+    public static ItemPO GetByName(string itemName)
+    {
+        for (int i = 0; i < Count(); i++)
+        {
+            if (instance.csvArray[i + 1, 0] == itemName)
+                return GetByRow(i);
+        }
+        Debug.LogWarning($"ItemData.GetByName: '{itemName}' not found");
+        return null;
+    }
+
 }
