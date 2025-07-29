@@ -27,7 +27,7 @@ public class HorizontalItem : Item
 
     public override Vector3 CenterPositionOffset()
     {
-        Vector3 offsetVector = new Vector3(0, Size.y / 2.0f, 0);
-        return offsetVector;
+        Quaternion rot = Quaternion.Euler(0, Dir.Rotation(), 0);
+        return rot * Offset;
     }
 }

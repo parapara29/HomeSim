@@ -8,4 +8,5 @@ public class ItemPO
     public ItemType type;
     public Vector3Int size;
     public bool isOccupied;
+    public Vector3 offset;
 }

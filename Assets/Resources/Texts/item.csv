@@ -1,9 +1,9 @@
-name;type(h/v);size;is occupied
-cabinet;h;4,2,2;1
-sofa;h;5,2,3;1
-lamp;h;2,4,2;1
-bench;h;2,1,2;1
-bedDouble;h;5,2,6;1
-loungeDesignSofaCorner;h;5,2,5;1
-tableCoffeeSquare;h;2,1,2;1
-bookcaseOpenLow;h;2,2,1;1
+name;type(h/v);size;is occupied;offset
+cabinet;h;4,2,2;1;0,0,0
+sofa;h;5,2,3;1;0,0,0
+lamp;h;2,4,2;1;0,0,0
+bench;h;2,1,2;1;0,0,0
+bedDouble;h;5,2,6;1;0,0,0
+loungeDesignSofaCorner;h;5,2,5;1;0,0,0
+tableCoffeeSquare;h;2,1,2;1;0,0,0
+bookcaseOpenLow;h;2,2,1;1;0,0,0

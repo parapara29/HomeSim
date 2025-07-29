@@ -37,6 +37,7 @@ public class ItemObject : MonoBehaviour
         Item.FlippedSize = new Vector3Int(size.z, size.y, size.x);
         Item.RotateSize = Item.Dir.IsFlipped() ? Item.FlippedSize : Item.Size;
         Item.IsOccupid = itemPO.isOccupied;
+        Item.Offset = itemPO.offset;
 
         gameObject.name = itemPO.name;
     }
@@ -57,6 +58,7 @@ public class ItemObject : MonoBehaviour
         Item.FlippedSize = new Vector3Int(size.z, size.y, size.x);
         Item.RotateSize = Item.Dir.IsFlipped() ? Item.FlippedSize : Item.Size;
         Item.IsOccupid = true; // TODO
+        Item.Offset = new Vector3(0, size.y / 2.0f, 0);
     }
     public void Init(Vector3Int size)
     {

@@ -164,13 +164,14 @@ public class GridGroup : MonoBehaviour
         Vector3 position = item.Position;
         Vector3 size = item.RotateSize;
         float rotateAngles = item.Dir.Rotation();
+        Vector3 offset = Quaternion.Euler(0, rotateAngles, 0) * item.Offset;
         if (item.PlaceType != PlaceType.None)
-            bottomGridsGroup.position = new Vector3(position.x, 0, position.z);
+            bottomGridsGroup.position = new Vector3(position.x - offset.x, 0, position.z - offset.z);
         else
-            bottomGridsGroup.position = new Vector3(position.x, position.y - size.y / 2.0f, position.z);
+            bottomGridsGroup.position = new Vector3(position.x - offset.x, position.y - offset.y, position.z - offset.z);
         bottomGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
 
-        sideGridsGroup.position = position;
+        sideGridsGroup.position = position - offset;
         sideGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
     }
 
