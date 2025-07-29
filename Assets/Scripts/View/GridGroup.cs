@@ -122,7 +122,7 @@ public class GridGroup : MonoBehaviour
 
         if (item.Type == ItemType.Vertical)
         {
-            offsetZ = -size.z / 2.0f;
+            offsetZ = item.Item.Offset.z - size.z / 2.0f;
             for (int i = 0; i < MAX_SIZE; i++)
             {
                 for (int j = 0; j < MAX_SIZE; j++)
@@ -170,7 +170,7 @@ public class GridGroup : MonoBehaviour
             bottomGridsGroup.position = new Vector3(position.x, position.y - offset.y, position.z);
         bottomGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
 
-        sideGridsGroup.position = position;
+        sideGridsGroup.position = position - offset;
         sideGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
     }
 
