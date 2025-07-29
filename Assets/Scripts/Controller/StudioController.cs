@@ -939,13 +939,13 @@ public class StudioController : MonoBehaviour
     {
         if (room == null) return;
         List<ItemSaveData> items = room.GetItemStates();
-        RoomSave.Save(items);
+        RoomSave.Save(currentPrefabName, items);
     }
 
     private void LoadRoomState()
     {
         if (room == null) return;
-        List<ItemSaveData> states = RoomSave.Load();
+        List<ItemSaveData> states = RoomSave.Load(currentPrefabName);
         foreach (var state in states)
         {
             ItemPO po = ItemData.GetByName(state.prefab);

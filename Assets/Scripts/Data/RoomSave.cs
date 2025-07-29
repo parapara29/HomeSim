@@ -17,22 +17,29 @@ public class RoomSaveData
 
 public static class RoomSave
 {
-    private const string SaveKey = "RoomState";
+    private const string SaveKeyPrefix = "RoomState_";
 
-    public static void Save(List<ItemSaveData> items)
+    public static void Save(string roomName, List<ItemSaveData> items)
     {
+        if (string.IsNullOrEmpty(roomName)) return;
+
         RoomSaveData data = new RoomSaveData();
         data.items = items;
         string json = JsonUtility.ToJson(data);
-        PlayerPrefs.SetString(SaveKey, json);
+        PlayerPrefs.SetString(SaveKeyPrefix + roomName, json);
         PlayerPrefs.Save();
     }
 
-    public static List<ItemSaveData> Load()
+    public static List<ItemSaveData> Load(string roomName)
     {
-        if (!PlayerPrefs.HasKey(SaveKey))
+        if (string.IsNullOrEmpty(roomName))
             return new List<ItemSaveData>();
-        string json = PlayerPrefs.GetString(SaveKey);
+
+        string key = SaveKeyPrefix + roomName;
+        if (!PlayerPrefs.HasKey(key))
+            return new List<ItemSaveData>();
+
+        string json = PlayerPrefs.GetString(key);
         RoomSaveData data = JsonUtility.FromJson<RoomSaveData>(json);
         if (data == null || data.items == null) return new List<ItemSaveData>();
         return data.items;
