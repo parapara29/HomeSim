@@ -30,11 +30,9 @@ public class VerticalItem : Item
 
     public override Vector3 CenterPositionOffset()
     {
-        float normalSize = Mathf.Abs(Vector3.Dot(RotateSize, Dir.Vector)) / 2.0f;
-        Vector3 offsetVector = normalSize * Dir.Vector;
-        return offsetVector;
+        Quaternion rot = Quaternion.Euler(0, Dir.Rotation(), 0);
+        return rot * Offset;
     }
 
 
 }
-

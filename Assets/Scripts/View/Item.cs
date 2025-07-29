@@ -24,6 +24,8 @@ public abstract class Item
     public Vector3Int RotateSize { get; set; }
     public Direction Dir { get; set; }
 
+    public Vector3 Offset { get; set; }
+
     // 中心位置
     public Vector3 Position { get; set; }
 

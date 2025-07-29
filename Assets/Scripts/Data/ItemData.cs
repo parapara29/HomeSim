@@ -38,6 +38,12 @@ public class ItemData : IData<ItemData>
 
         item.isOccupied = instance.csvArray[i, 3] == "1";
 
+        string[] offsetArray = instance.csvArray[i, 4].Split(',');
+        float ox = float.Parse(offsetArray[0]);
+        float oy = float.Parse(offsetArray[1]);
+        float oz = float.Parse(offsetArray[2]);
+        item.offset = new Vector3(ox, oy, oz);
+
         return item;
     }
 

@@ -28,6 +28,7 @@ public static class ItemCsvGenerator
 
         GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         Bounds b = CalculateBounds(instance);
+        Vector3 offset = b.center - instance.transform.position;
         Object.DestroyImmediate(instance);
 
         Vector3Int size = new Vector3Int(
@@ -35,10 +36,11 @@ public static class ItemCsvGenerator
             Mathf.RoundToInt(b.size.y),
             Mathf.RoundToInt(b.size.z));
 
-        string line = string.Format("{0};{1};{2},{3},{4};1",
+        string line = string.Format("{0};{1};{2},{3},{4};1;{5},{6},{7}",
             prefab.name,
             type == ItemType.Horizontal ? "h" : "v",
-            size.x, size.y, size.z);
+            size.x, size.y, size.z,
+            offset.x, offset.y, offset.z);
 
         string fullPath = Path.Combine(Application.dataPath, "Resources/Texts/item.csv");
         File.AppendAllText(fullPath, "\n" + line);

@@ -1,9 +1,21 @@
-name;type(h/v);size;is occupied
-cabinet;h;4,2,2;1
-sofa;h;5,2,3;1
-lamp;h;2,4,2;1
-bench;h;2,1,2;1
-bedDouble;h;5,2,6;1
-loungeDesignSofaCorner;h;5,2,5;1
-tableCoffeeSquare;h;2,1,2;1
-bookcaseOpenLow;h;2,2,1;1
+name;type(h/v);size;is occupied;offset
+bedDouble;h;5,2,6;1;2.39,0.9375,2.8125
+cabinet;h;4,2,2;1;0,0.7500005,-0.360713
+cabinetBedDrawerTable;h;1,1,1;1;0.615,0.658,0.48175
+cabinetTelevision;h;4,2,1;1;2,0.775,0.625
+cabinetBedDrawer;h;1,1,1;1;0.615,0.658,0.48175
+chair;h;1,2,1;1;0.5,1.175,0.5
+chairModernCushion;h;1,2,1;1;0.5,1.15,0.5
+desk 1;h;4,2,2;1;1.786188,0.9610187,0.91925
+kitchenFridge;h;2,5,1;1;1.075,2.3,0.6798347
+kitchenSink;h;2,2,2;1;1.075,1.225,1.125
+kitchenStove;h;2,2,2;1;1.075,1.125,1.125
+lamp;h;2,4,2;1;0,1.859385,0.1898665
+lampRoundFloor;h;1,4,1;1;0.3,2.15,0.3
+speaker;h;1,3,1;1;0.37,1.591,0.37
+trashcan;h;2,5,2;1;0,2.266092,-0.05747128
+sofa;h;5,2,3;1;0,0.9959045,-0.235289
+bookcaseOpen;h;2,4,1;1;1,2.2,0.625
+rugRectangle;h;3,0,2;1;1.57,0.009999999,0.92
+rugRounded;h;3,0,2;1;1.57,0.009999999,0.92
+coatRack;v;1,1,2;1;0.335999,0.7,-1.12
