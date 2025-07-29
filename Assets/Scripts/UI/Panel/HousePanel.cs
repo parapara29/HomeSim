@@ -40,7 +40,8 @@ public class HousePanel : MonoBehaviour
     {
         rooms = new[]
         {
-            new RoomEntry { buttonName = "Bedroom", prefabName = "Room" }
+            new RoomEntry { buttonName = "Bedroom", prefabName = "Room" },
+            new RoomEntry { buttonName = "Kitchen", prefabName = "Kitchen" }
         };
         backButton = transform.Find("BackButton").GetComponent<Button>();
         foreach (var entry in rooms)
