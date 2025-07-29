@@ -122,7 +122,7 @@ public class GridGroup : MonoBehaviour
 
         if (item.Type == ItemType.Vertical)
         {
-            offsetZ = -size.z / 2.0f;
+            offsetZ = item.Item.Offset.z - size.z / 2.0f;
             for (int i = 0; i < MAX_SIZE; i++)
             {
                 for (int j = 0; j < MAX_SIZE; j++)
@@ -162,15 +162,15 @@ public class GridGroup : MonoBehaviour
     public void SetTransform(Item item)
     {
         Vector3 position = item.Position;
-        Vector3 size = item.RotateSize;
         float rotateAngles = item.Dir.Rotation();
+        Vector3 offset = Quaternion.Euler(0, rotateAngles, 0) * item.Offset;
         if (item.PlaceType != PlaceType.None)
             bottomGridsGroup.position = new Vector3(position.x, 0, position.z);
         else
-            bottomGridsGroup.position = new Vector3(position.x, position.y - size.y / 2.0f, position.z);
+            bottomGridsGroup.position = new Vector3(position.x, position.y - offset.y, position.z);
         bottomGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
 
-        sideGridsGroup.position = position;
+        sideGridsGroup.position = position - offset;
         sideGridsGroup.eulerAngles = new Vector3(0, rotateAngles, 0);
     }
 
