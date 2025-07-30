@@ -28431,7 +28431,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1361079514}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e16294e1cb22c54e85a7120cfb67ed0, type: 3}
   m_Name: 
@@ -28472,17 +28472,20 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1361079514}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8803146575a76b5419e61734bdfb0a78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
+  pitch: 30
+  yaw: 45
   distance: 30
   minDistance: 10
   maxDistance: 60
-  angle: 60
+  dragSpeed: 120
   zoomSpeed: 0.01
+  smoothTime: 0.12
 --- !u!114 &1361079523
 MonoBehaviour:
   m_ObjectHideFlags: 0
