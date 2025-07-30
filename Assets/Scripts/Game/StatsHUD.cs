@@ -1,9 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class StatsHUD : MonoBehaviour
 {
     public static StatsHUD Instance { get; private set; }
+
+    [SerializeField]
+    Vector2 startPosition = new Vector2(10f, -10f);
 
     Text moneyText;
     Image hungerBar;
@@ -28,7 +32,7 @@ public class StatsHUD : MonoBehaviour
         rect.anchorMin = new Vector2(0f, 1f);
         rect.anchorMax = new Vector2(0f, 1f);
         rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(10f, -10f);
+        rect.anchoredPosition = startPosition;
         rect.sizeDelta = new Vector2(160f, 60f);
 
         var bg = new GameObject("Background", typeof(RectTransform), typeof(Image));
@@ -94,6 +98,13 @@ public class StatsHUD : MonoBehaviour
             PlayerStats.Instance.OnStatsChanged -= UpdateUI;
     }
 
+    public void SetHudPosition(Vector2 pos)
+    {
+        var rect = GetComponent<RectTransform>();
+        if (rect != null)
+            rect.anchoredPosition = pos;
+    }
+
     void UpdateUI()
     {
         var stats = PlayerStats.Instance;
@@ -106,13 +117,31 @@ public class StatsHUD : MonoBehaviour
             fatigueBar.fillAmount = stats.Fatigue;
     }
 
-    public static void CreateIfNeeded()
+    public static StatsHUD CreateIfNeeded(Vector2? position = null)
     {
-        if (Instance != null) return;
+        if (Instance != null)
+        {
+            if (position.HasValue) Instance.SetHudPosition(position.Value);
+            return Instance;
+        }
+
         Canvas canvas = Object.FindObjectOfType<Canvas>();
-        if (canvas == null) return;
+        if (canvas == null)
+        {
+            var canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var c = canvasGO.GetComponent<Canvas>();
+            c.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas = c;
+        }
+
+        PlayerStats.CreateIfNeeded();
+
+
         GameObject go = new GameObject("StatsHUD");
         go.transform.SetParent(canvas.transform, false);
-        go.AddComponent<StatsHUD>();
+        var hud = go.AddComponent<StatsHUD>();
+        if (position.HasValue) hud.SetHudPosition(position.Value);
+        return hud;
     }
 }
+
