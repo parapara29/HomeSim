@@ -11,6 +11,7 @@ public class StatsHUD : MonoBehaviour
     Text  moneyText;
     Image hungerBar;
     Image fatigueBar;
+    UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
 
     /* ───────────────────────── LIFECYCLE ───────────────────────── */
 
@@ -111,10 +112,11 @@ public class StatsHUD : MonoBehaviour
     void Subscribe()
     {
         if (PlayerStats.Instance != null)
-            PlayerStats.Instance.OnStatsChanged += UpdateUI;
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
         // also refresh whenever a new scene loads (so the HUD survives)
-        SceneManager.sceneLoaded += (_, __) => UpdateUI();
+        sceneLoadedHandler = (_, __) => UpdateUI();
+        SceneManager.sceneLoaded += sceneLoadedHandler;
 
         UpdateUI();
     }
@@ -123,7 +125,16 @@ public class StatsHUD : MonoBehaviour
     {
         if (PlayerStats.Instance != null)
             PlayerStats.Instance.OnStatsChanged -= UpdateUI;
-        SceneManager.sceneLoaded -= (_, __) => UpdateUI();
+        if (sceneLoadedHandler != null)
+            SceneManager.sceneLoaded -= sceneLoadedHandler;
+
+        if (Instance == this)
+            Instance = null;
+    }
+
+    void OnSceneLoaded(Scene _, LoadSceneMode __)
+    {
+        UpdateUI();
     }
 
     void UpdateUI()
@@ -131,9 +142,12 @@ public class StatsHUD : MonoBehaviour
         var s = PlayerStats.Instance;
         if (s == null) return;
 
-        moneyText.text   = $"${s.Money}";
-        hungerBar.fillAmount  = Mathf.Clamp01(s.Hunger);
-        fatigueBar.fillAmount = Mathf.Clamp01(s.Fatigue);
+        if (moneyText != null)
+            moneyText.text = $"${s.Money}";
+        if (hungerBar != null)
+            hungerBar.fillAmount = Mathf.Clamp01(s.Hunger);
+        if (fatigueBar != null)
+            fatigueBar.fillAmount = Mathf.Clamp01(s.Fatigue);
     }
 
     /* ───────────────────────── PUBLIC HELPERS ───────────────────────── */
@@ -148,7 +162,7 @@ public class StatsHUD : MonoBehaviour
     {
         if (Instance != null)
         {
-            if (pos.HasValue) Instance.SetHudPosition(pos.Value);
+            if (pos.HasValue) Instance.SetHudPosition(new Vector2(10f, 10f - Screen.height));
             return Instance;
         }
 
