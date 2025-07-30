@@ -10,6 +10,7 @@ public class ItemObject : MonoBehaviour
 
     public ItemType Type;
     public Item Item;
+    public int Cost { get; private set; }
 
     // public PlaceableItem PlaceableItem {
     // 	get {
@@ -38,6 +39,7 @@ public class ItemObject : MonoBehaviour
         Item.RotateSize = Item.Dir.IsFlipped() ? Item.FlippedSize : Item.Size;
         Item.IsOccupid = itemPO.isOccupied;
         Item.Offset = itemPO.offset;
+        Cost = itemPO.cost;
 
         gameObject.name = itemPO.name;
     }
