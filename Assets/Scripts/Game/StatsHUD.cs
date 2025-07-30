@@ -112,8 +112,10 @@ public class StatsHUD : MonoBehaviour
     void Subscribe()
     {
         if (PlayerStats.Instance != null)
+            {
             SceneManager.sceneLoaded += OnSceneLoaded;
-
+            PlayerStats.Instance.OnStatsChanged += UpdateUI; // update whenever stats change
+        }
         // also refresh whenever a new scene loads (so the HUD survives)
         sceneLoadedHandler = (_, __) => UpdateUI();
         SceneManager.sceneLoaded += sceneLoadedHandler;
