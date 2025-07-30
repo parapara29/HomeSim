@@ -12,6 +12,7 @@ public class DragItemCell : Cell, IBeginDragHandler, IDragHandler, IEndDragHandl
 
     private bool scroll;
     private Text nameText;
+    private Text priceText;
     private Image image;
 
     void Start()
@@ -24,6 +25,7 @@ public class DragItemCell : Cell, IBeginDragHandler, IDragHandler, IEndDragHandl
     public override void Init()
     {
         nameText = transform.Find("name").GetComponent<Text>();
+        priceText = transform.Find("price").GetComponent<Text>();
         image = transform.Find("image").GetComponent<Image>();
     }
 
@@ -70,6 +72,7 @@ public class DragItemCell : Cell, IBeginDragHandler, IDragHandler, IEndDragHandl
     public void SetItem(ItemPO item)
     {
         nameText.text = item.name;
+        priceText.text = item.cost.ToString();
         string path = string.Format("Images/Items/{0}_512", item.name);
         Sprite sprite = Resources.Load<Sprite>(path) as Sprite;
         if (sprite)
