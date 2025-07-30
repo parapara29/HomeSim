@@ -355,6 +355,12 @@ public class StudioController : MonoBehaviour
     {
         if (isItemEdited) return;
 
+        if (PlayerStats.Money < itemPO.cost)
+        {
+            Debug.LogWarning($"Not enough money to place {itemPO.name}");
+            return;
+        }
+
         GameObject itemGO = null;
 
         itemGO = Instantiate(Resources.Load("Prefabs/Items/" + itemPO.name)) as GameObject;
@@ -432,6 +438,7 @@ public class StudioController : MonoBehaviour
         }
 
         room.PlaceItem(currentItem);
+        PlayerStats.Money -= currentItem.Cost;
 
         // after
         Destroy(editedItem);

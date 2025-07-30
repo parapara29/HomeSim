@@ -44,6 +44,8 @@ public class ItemData : IData<ItemData>
         float oz = float.Parse(offsetArray[2]);
         item.offset = new Vector3(ox, oy, oz);
 
+        item.cost = 0; // default price until cost data is provided
+
         return item;
     }
 
