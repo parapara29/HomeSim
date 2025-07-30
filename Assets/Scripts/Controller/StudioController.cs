@@ -431,6 +431,19 @@ public class StudioController : MonoBehaviour
             return;
         }
 
+        var stats = PlayerStats.Instance;
+        if (stats != null)
+        {
+            int cost = 0;
+            if (currentItem != null) cost = currentItem.Cost;
+            if (stats.Money < cost)
+            {
+                Debug.LogWarning("Not enough money to buy this item");
+                return;
+            }
+            stats.ChangeMoney(-cost);
+        }
+
         room.PlaceItem(currentItem);
 
         // after

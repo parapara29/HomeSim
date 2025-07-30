@@ -24,6 +24,7 @@ public class PlayerStats : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        StatsHUD.CreateIfNeeded();
     }
 
     public static void CreateIfNeeded()
