@@ -43,7 +43,7 @@ public class ItemData : IData<ItemData>
         float oy = float.Parse(offsetArray[1]);
         float oz = float.Parse(offsetArray[2]);
         item.offset = new Vector3(ox, oy, oz);
-
+        int.TryParse(instance.csvArray[i, 5], out item.cost);
         return item;
     }
 

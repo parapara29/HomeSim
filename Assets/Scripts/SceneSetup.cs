@@ -14,5 +14,9 @@ public class SceneSetup : MonoBehaviour
 
         // ───────── TimeScale (safety) ─────────
         if (Time.timeScale == 0) Time.timeScale = 1f;
+
+        // ───────── HUD & Player Stats ─────────
+        PlayerStats.CreateIfNeeded();
+        StatsHUD.CreateIfNeeded();
     }
 }
