@@ -19,7 +19,12 @@ public class IsometricCamera : MonoBehaviour
             target = go.transform;
             target.position = Vector3.zero;
         }
-        UpdateTransform();
+        IsometricCameraState.Restore(this);
+    }
+
+    void OnDisable()
+    {
+        IsometricCameraState.Save(this);
     }
 
     void Update()
@@ -51,7 +56,7 @@ public class IsometricCamera : MonoBehaviour
         UpdateTransform();
     }
 
-    void UpdateTransform()
+    public void UpdateTransform()
     {
         Vector3 dir = Quaternion.Euler(pitch, yaw, 0f) * Vector3.back;
         transform.position = target.position + dir * distance;
