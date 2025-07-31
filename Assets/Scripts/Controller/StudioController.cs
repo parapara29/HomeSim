@@ -51,7 +51,13 @@ public class StudioController : MonoBehaviour
             studioPanel.SetMode(StudioMode.Type);
         }
     }
-
+    private void Update()
+    {
+        if (isOverUI && EventSystem.current != null && !EventSystem.current.IsPointerOverGameObject())
+        {
+            isOverUI = false;
+        }
+    }
     private void Initialize()
     {
         if (initialized) return;

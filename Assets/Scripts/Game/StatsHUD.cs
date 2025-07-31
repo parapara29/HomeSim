@@ -161,7 +161,7 @@ public class StatsHUD : MonoBehaviour
         if (moneyText != null)
             moneyText.text = $"${s.Money}";
         if (hungerBar != null)
-            hungerBar.fillAmount = Mathf.Clamp01(s.Hunger);
+            hungerBar.fillAmount = 1f - Mathf.Clamp01(s.Hunger);
         if (fatigueBar != null)
             fatigueBar.fillAmount = Mathf.Clamp01(s.Fatigue);
     }
