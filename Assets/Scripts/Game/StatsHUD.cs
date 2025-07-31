@@ -164,7 +164,7 @@ public class StatsHUD : MonoBehaviour
     {
         if (Instance != null)
         {
-            if (pos.HasValue) Instance.SetHudPosition(new Vector2(10f, 10f - Screen.height));
+            if (pos.HasValue) Instance.SetHudPosition(pos.Value);
             return Instance;
         }
 
@@ -174,11 +174,13 @@ public class StatsHUD : MonoBehaviour
         {
             var cGo = new GameObject("HUDCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = cGo.GetComponent<Canvas>();
-            canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;                       // keep on top
             var scaler = cGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
+            DontDestroyOnLoad(cGo);
+            
         }
 
         // make sure PlayerStats exists
@@ -186,6 +188,7 @@ public class StatsHUD : MonoBehaviour
 
         // build the HUD
         var hudGo = new GameObject("StatsHUD");
+        DontDestroyOnLoad(hudGo);
         hudGo.transform.SetParent(canvas.transform, false);
         var hud = hudGo.AddComponent<StatsHUD>();
 

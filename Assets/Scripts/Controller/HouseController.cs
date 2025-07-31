@@ -41,7 +41,15 @@ public class HouseController : MonoBehaviour
         drag.OnClick = ShowRoomPanel;
 
         /* 2. Locate UI panels */
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = null;
+        foreach (Canvas c in FindObjectsOfType<Canvas>())
+        {
+            if (c.transform.Find("HousePanel") && c.transform.Find("StudioPanel"))
+            {
+                canvas = c;
+                break;
+            }
+        }
         if (canvas == null)
         {
             Debug.LogError("HouseController: Canvas not found in scene.");
