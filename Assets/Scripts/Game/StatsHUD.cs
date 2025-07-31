@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -111,15 +112,28 @@ public class StatsHUD : MonoBehaviour
 
     void Subscribe()
     {
+        sceneLoadedHandler = (_, __) => UpdateUI();
+        SceneManager.sceneLoaded += sceneLoadedHandler;
         if (PlayerStats.Instance != null)
-            {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+        {
             PlayerStats.Instance.OnStatsChanged += UpdateUI; // update whenever stats change
+        }
+        else
+        {
+            StartCoroutine(WaitForPlayerStats());
         }
         // also refresh whenever a new scene loads (so the HUD survives)
         sceneLoadedHandler = (_, __) => UpdateUI();
         SceneManager.sceneLoaded += sceneLoadedHandler;
 
+        UpdateUI();
+    }
+    IEnumerator WaitForPlayerStats()
+    {
+        while (PlayerStats.Instance == null)
+            yield return null;
+
+        PlayerStats.Instance.OnStatsChanged += UpdateUI;
         UpdateUI();
     }
 
@@ -139,7 +153,7 @@ public class StatsHUD : MonoBehaviour
         UpdateUI();
     }
 
-    void UpdateUI()
+    public void UpdateUI()
     {
         var s = PlayerStats.Instance;
         if (s == null) return;

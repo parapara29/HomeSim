@@ -148,10 +148,13 @@ public class WorkStation : MonoBehaviour
         if (stats != null)
         {
             stats.ChangeMoney(hours * wagePerHour);
-            stats.SetHunger (stats.Hunger  - hours * hungerDrain);
+            stats.SetHunger(stats.Hunger - hours * hungerDrain);
             stats.SetFatigue(stats.Fatigue + hours * fatigueGain);
+            StatsHUD.Instance?.UpdateUI();
         }
 
+        input.DeactivateInputField();
+        EventSystem.current.SetSelectedGameObject(null);
         Destroy(panel);
         panel = null;
     }
