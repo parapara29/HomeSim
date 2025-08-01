@@ -63,13 +63,17 @@ public class PlayerStats : MonoBehaviour
 
     public void SetHunger(float value)
     {
+        var previous = hunger;
         hunger = Mathf.Clamp01(value);
+        Debug.Log($"Hunger changed from {previous} to {hunger}");
         OnStatsChanged?.Invoke();
     }
 
     public void SetFatigue(float value)
     {
+        var previous = fatigue;
         fatigue = Mathf.Clamp01(value);
+        Debug.Log($"Fatigue changed from {previous} to {fatigue}");
         OnStatsChanged?.Invoke();
     }
 }

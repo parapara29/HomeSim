@@ -123,8 +123,6 @@ public class StatsHUD : MonoBehaviour
             StartCoroutine(WaitForPlayerStats());
         }
         // also refresh whenever a new scene loads (so the HUD survives)
-        sceneLoadedHandler = (_, __) => UpdateUI();
-        SceneManager.sceneLoaded += sceneLoadedHandler;
 
         UpdateUI();
     }
@@ -161,7 +159,7 @@ public class StatsHUD : MonoBehaviour
         if (moneyText != null)
             moneyText.text = $"${s.Money}";
         if (hungerBar != null)
-            hungerBar.fillAmount = 1f - Mathf.Clamp01(s.Hunger);
+            hungerBar.fillAmount = Mathf.Clamp01(s.Hunger);
         if (fatigueBar != null)
             fatigueBar.fillAmount = Mathf.Clamp01(s.Fatigue);
     }

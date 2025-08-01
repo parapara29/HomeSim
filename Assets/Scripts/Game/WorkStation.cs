@@ -37,6 +37,26 @@ public class WorkStation : MonoBehaviour
         scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
+         var closeArea = new GameObject(
+            "CloseArea",
+            typeof(RectTransform), typeof(Image), typeof(Button)
+        );
+        closeArea.transform.SetParent(canvasGo.transform, false);
+
+        var caRect = closeArea.GetComponent<RectTransform>();
+        caRect.anchorMin = Vector2.zero;
+        caRect.anchorMax = Vector2.one;
+        caRect.offsetMin = caRect.offsetMax = Vector2.zero;
+
+        // transparent by default, but still receives clicks
+        closeArea.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+
+        closeArea.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            Destroy(panel);
+            panel = null;
+        });
+
         /* Panel background --------------------------------------- */
         var panelBg = new GameObject("Panel", typeof(RectTransform), typeof(Image));
         panelBg.transform.SetParent(canvasGo.transform, false);
@@ -157,5 +177,18 @@ public class WorkStation : MonoBehaviour
         EventSystem.current.SetSelectedGameObject(null);
         Destroy(panel);
         panel = null;
+        var houseDrag = FindObjectOfType<HouseDragRotate>();
+        if (houseDrag != null) houseDrag.enabled = true;
+
+        var roomCam = FindObjectOfType<RoomCamera>();
+        if (roomCam != null) roomCam.enabled = true;
+
+        var controller = FindObjectOfType<CharacterController>();
+        if (controller != null) controller.enabled = true;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible   = true;
+
+        FindObjectOfType<StudioController>()?.ClearOverUI();
     }
 }

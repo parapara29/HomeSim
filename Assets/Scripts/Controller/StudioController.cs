@@ -58,6 +58,10 @@ public class StudioController : MonoBehaviour
             isOverUI = false;
         }
     }
+    public void ClearOverUI()
+    {
+        isOverUI = false;
+    }
     private void Initialize()
     {
         if (initialized) return;
