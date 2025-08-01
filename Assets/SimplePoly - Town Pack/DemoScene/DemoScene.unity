@@ -28378,7 +28378,6 @@ GameObject:
   - component: {fileID: 1361079518}
   - component: {fileID: 1361079516}
   - component: {fileID: 1361079515}
-  - component: {fileID: 1361079520}
   - component: {fileID: 1361079521}
   - component: {fileID: 1361079522}
   - component: {fileID: 1361079523}
@@ -28471,23 +28470,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1361079520
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1361079514}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9e16294e1cb22c54e85a7120cfb67ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cameraSensitivity: 90
-  climbSpeed: 4
-  normalMoveSpeed: 10
-  slowMoveFactor: 0.25
-  fastMoveFactor: 3
 --- !u!114 &1361079521
 MonoBehaviour:
   m_ObjectHideFlags: 0
