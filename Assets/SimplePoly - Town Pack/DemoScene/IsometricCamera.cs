@@ -60,8 +60,10 @@ public class IsometricCamera : MonoBehaviour
     /* -------------------- input -------------------- */
     void Update()
     {
-        HandleMouse();   // Editor / desktop
-        HandleTouch();   // Android & iOS
+        if (Input.touchCount > 0)
+            HandleTouch();
+        else
+            HandleMouse();   // Android & iOS
 
         // mouse-wheel zoom (Editor convenience)
         float wheel = Input.GetAxis("Mouse ScrollWheel");
@@ -117,7 +119,6 @@ public class IsometricCamera : MonoBehaviour
     #region Touch Input (Android / iOS)
     void HandleTouch()
     {
-        if (Input.touchCount == 0) { _isPanning = _isOrbiting = false; return; }
 
         /* ---------- One-finger PAN ---------- */
         if (Input.touchCount == 1)

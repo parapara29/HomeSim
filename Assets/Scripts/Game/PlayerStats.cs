@@ -26,7 +26,6 @@ public class PlayerStats : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         // load saved money amount if available
         money = PlayerPrefs.GetInt(MoneyKey, money);
-        StatsHUD.CreateIfNeeded();
     }
     void OnDestroy()
     {

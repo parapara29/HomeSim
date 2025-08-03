@@ -179,13 +179,13 @@ public class WorkStation : MonoBehaviour
     void ConfirmWork(InputField input)
     {
         if (!int.TryParse(input.text, out int hours)) hours = 0;
-
+        hours = Mathf.Clamp(hours, 0, 12);
         var stats = PlayerStats.Instance;
         if (stats != null)
         {
             stats.ChangeMoney(hours * wagePerHour);
-            stats.SetHunger(stats.Hunger - hours * hungerDrain);
-            stats.SetFatigue(stats.Fatigue + hours * fatigueGain);
+            stats.SetHunger(Mathf.Clamp01(stats.Hunger - hours * hungerDrain));
+            stats.SetFatigue(Mathf.Clamp01(stats.Fatigue + hours * fatigueGain));
             StatsHUD.Instance?.UpdateUI();
         }
 

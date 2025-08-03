@@ -17,6 +17,5 @@ public class SceneSetup : MonoBehaviour
 
         // ───────── HUD & Player Stats ─────────
         PlayerStats.CreateIfNeeded();
-        StatsHUD.CreateIfNeeded();
     }
 }
