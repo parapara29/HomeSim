@@ -120,6 +120,7 @@ public class IsometricCamera : MonoBehaviour
     void HandleTouch()
     {
 
+
         /* ---------- One-finger PAN ---------- */
         if (Input.touchCount == 1)
         {

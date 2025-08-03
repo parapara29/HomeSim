@@ -13,7 +13,13 @@ public class WorkStation : MonoBehaviour
     void OnMouseUpAsButton()        // taps also reach here on Android
     {
         if (panel == null)
-            BuildPanel();
+            {
+            var stats = PlayerStats.Instance;
+            if (stats != null &&  stats.Fatigue >= 1f)
+                BuildRestPopup();
+            else
+                BuildPanel();
+        }
     }
 
     /* ────────────────────────────────────────────────────────────── */
@@ -137,6 +143,61 @@ public class WorkStation : MonoBehaviour
         btnTxt.alignment = TextAnchor.MiddleCenter;
 
         btnGO.GetComponent<Button>().onClick.AddListener(() => ConfirmWork(inputField));
+    }
+
+    void BuildRestPopup()
+    {
+        EnsureEventSystem();
+
+        var canvasGo = new GameObject(
+            "RestPopup",
+            typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)
+        );
+        panel = canvasGo;
+
+        var canvas = canvasGo.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+        var scaler = canvasGo.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        var closeArea = new GameObject(
+            "CloseArea",
+            typeof(RectTransform), typeof(Image), typeof(Button)
+        );
+        closeArea.transform.SetParent(canvasGo.transform, false);
+
+        var caRect = closeArea.GetComponent<RectTransform>();
+        caRect.anchorMin = Vector2.zero;
+        caRect.anchorMax = Vector2.one;
+        caRect.offsetMin = caRect.offsetMax = Vector2.zero;
+
+        closeArea.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        closeArea.GetComponent<Button>().onClick.AddListener(ClosePanel);
+
+        var panelBg = new GameObject("Panel", typeof(RectTransform), typeof(Image));
+        panelBg.transform.SetParent(canvasGo.transform, false);
+
+        var rect = panelBg.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
+        rect.sizeDelta = new Vector2(300, 150);
+        panelBg.GetComponent<Image>().color = new Color(0, 0, 0, .6f);
+
+        var textGO = new GameObject("Text", typeof(RectTransform), typeof(Text));
+        textGO.transform.SetParent(panelBg.transform, false);
+
+        var textRect = textGO.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(10, 10);
+        textRect.offsetMax = new Vector2(-10, -10);
+
+        var text = textGO.GetComponent<Text>();
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.text = "Please rest before working";
+        text.color = Color.white;
+        text.alignment = TextAnchor.MiddleCenter;
     }
 
     /* ────────────────────────────────────────────────────────────── */

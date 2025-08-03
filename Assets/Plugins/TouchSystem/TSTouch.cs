@@ -46,6 +46,7 @@ public class TSTouch
         return this;
     }
 
+#if UNITY_EDITOR || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_WEBPLAYER || UNITY_WEBGL
     public TSTouch updateByMouse()
     {
         // do we have some input to work with?
@@ -68,7 +69,6 @@ public class TSTouch
         return this;
     }
 
-#if UNITY_EDITOR || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_WEBPLAYER || UNITY_WEBGL
     public TSTouch populateWithPosition(Vector2 position, TouchPhase touchPhase)
     {
         double clickTime = Time.time;
