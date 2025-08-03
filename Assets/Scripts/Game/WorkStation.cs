@@ -6,8 +6,6 @@ public class WorkStation : MonoBehaviour
 {
     [Header("Work settings")]
     [SerializeField] int   wagePerHour = 70;
-    [SerializeField] float hungerDrain = 0.05f;
-    [SerializeField] float fatigueGain = 0.05f;
 
     GameObject panel;
 
@@ -184,8 +182,9 @@ public class WorkStation : MonoBehaviour
         if (stats != null)
         {
             stats.ChangeMoney(hours * wagePerHour);
-            stats.SetHunger(Mathf.Clamp01(stats.Hunger - hours * hungerDrain));
-            stats.SetFatigue(Mathf.Clamp01(stats.Fatigue + hours * fatigueGain));
+            float normalized = hours / 12f;
+            stats.SetHunger(Mathf.Clamp01(stats.Hunger - normalized));
+            stats.SetFatigue(Mathf.Clamp01(stats.Fatigue + normalized));
             StatsHUD.Instance?.UpdateUI();
         }
 

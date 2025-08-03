@@ -12,6 +12,8 @@ public class StatsHUD : MonoBehaviour
     Text  moneyText;
     Image hungerBar;
     Image fatigueBar;
+    float hungerBarMaxWidth;
+    float fatigueBarMaxWidth;
     UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
 
     /* ───────────────────────── LIFECYCLE ───────────────────────── */
@@ -63,8 +65,8 @@ public class StatsHUD : MonoBehaviour
 
         /* elements */
         moneyText  = CreateText ("MoneyText" , new Vector2(0, -5));
-        hungerBar  = CreateBar  ("HungerBar" , new Vector2(0, -25), Color.green);
-        fatigueBar = CreateBar  ("FatigueBar", new Vector2(0, -45), Color.cyan);
+        hungerBar  = CreateBar  ("HungerBar" , new Vector2(0, -25), Color.green, out hungerBarMaxWidth);
+        fatigueBar = CreateBar  ("FatigueBar", new Vector2(0, -45), Color.cyan, out fatigueBarMaxWidth);
     }
 
     Text CreateText(string name, Vector2 pos)
@@ -88,23 +90,36 @@ public class StatsHUD : MonoBehaviour
         return t;
     }
 
-    Image CreateBar(string name, Vector2 pos, Color colour)
+    Image CreateBar(string name, Vector2 pos, Color colour, out float maxWidth)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(Image));
         go.transform.SetParent(transform, false);
 
         var rect = go.GetComponent<RectTransform>();
-        rect.anchorMin       = new Vector2(0, 1);
-        rect.anchorMax       = new Vector2(1, 1);
-        rect.pivot           = new Vector2(0, 1);
+        rect.anchorMin        = new Vector2(0, 1);
+        rect.anchorMax        = new Vector2(0, 1);
+        rect.pivot            = new Vector2(0, 1);
         rect.anchoredPosition = pos;
-        rect.sizeDelta       = new Vector2(0, 15);
+        rect.sizeDelta        = new Vector2(GetComponent<RectTransform>().rect.width, 15);
 
-        var img = go.GetComponent<Image>();
-        img.color      = colour;
-        img.type       = Image.Type.Filled;
-        img.fillMethod = Image.FillMethod.Horizontal;
-        img.fillAmount = 1;
+        // background to show empty portion
+        var bg = go.GetComponent<Image>();
+        bg.color = new Color(0, 0, 0, 0.3f);
+
+        maxWidth = rect.rect.width;
+
+        // create fill image as child
+        var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+        fill.transform.SetParent(go.transform, false);
+        var fillRect = fill.GetComponent<RectTransform>();
+        fillRect.anchorMin = new Vector2(0, 0);
+        fillRect.anchorMax = new Vector2(0, 1);
+        fillRect.pivot     = new Vector2(0, 0.5f);
+        fillRect.anchoredPosition = Vector2.zero;
+        fillRect.sizeDelta = new Vector2(maxWidth, 0);
+
+        var img = fill.GetComponent<Image>();
+        img.color = colour;
         return img;
     }
 
@@ -159,9 +174,15 @@ public class StatsHUD : MonoBehaviour
         if (moneyText != null)
             moneyText.text = $"${s.Money}";
         if (hungerBar != null)
-            hungerBar.fillAmount = Mathf.Clamp01(s.Hunger);
+            {
+            float w = hungerBarMaxWidth * Mathf.Clamp01(s.Hunger);
+            hungerBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+        }
         if (fatigueBar != null)
-            fatigueBar.fillAmount = Mathf.Clamp01(s.Fatigue);
+            {
+            float w = fatigueBarMaxWidth * Mathf.Clamp01(s.Fatigue);
+            fatigueBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+        }
     }
 
     /* ───────────────────────── PUBLIC HELPERS ───────────────────────── */
