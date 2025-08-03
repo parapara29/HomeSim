@@ -1,38 +1,45 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-[DefaultExecutionOrder(100)]                 // run after most scripts
+[DefaultExecutionOrder(100)]
+[RequireComponent(typeof(Camera))]
 public class IsometricCamera : MonoBehaviour
 {
-    [Header("Target & angles")]
-    public Transform target;
-    public float pitch = 30f;                // fixed for iso
-    public float yaw   = 45f;                // desired yaw (set by drag)
+    /* -------------------- user-tunable -------------------- */
+    [Header("Target & Angles")]
+    public Transform target;              // pivot the camera looks at
+    public float pitch = 30f;             // fixed iso pitch
+    public float yaw   = 45f;             // desired yaw (updated by orbit)
 
     [Header("Distances")]
-    public float distance = 30f;             // desired distance (set by zoom)
+    public float distance    = 30f;       // desired distance (zoom)
     public float minDistance = 10f;
     public float maxDistance = 60f;
 
     [Header("Input tuning")]
-    [SerializeField] float dragSpeed   = 120f;   // ° per pixel-second
-    [SerializeField] float zoomSpeed   = 0.01f;  // pinch scale factor
+    [SerializeField] float orbitSpeed = 120f;   // ° per pixel-second (mouse / twist)
+    [SerializeField] float panSpeed   = 1.0f;   // world units per pixel @ distance=30
+    [SerializeField] float zoomSpeed  = 0.01f;  // pinch scale factor
 
     [Header("Smoothing")]
-    [SerializeField] float smoothTime = 0.12f;   // seconds to 63 % target
+    [SerializeField] float smoothTime = 0.12f;  // seconds to reach 63 %
 
-    /* ───────── private state ───────── */
-    Camera _cam;
-    bool   _dragging;
-    Vector2 _prevPos;
+    /* -------------------- private state -------------------- */
+    Camera  _cam;
 
-    float _curYaw, _curYawVel;
-    float _curDist, _curDistVel;
+    // smoothed values
+    float   _curYaw,  _curYawVel;
+    float   _curDist, _curDistVel;
+    Vector3 _desiredPivot;
+    Vector3 _pivotVel;
 
-    Vector3  _desiredPivot;        
-    Vector3  _pivotVel;
+    // mouse / touch helpers
+    bool    _isPanning, _isOrbiting;
+    Vector2 _prevPos;              // screen-space
+    float   _prevPinchDist;
+    float   _prevTwistAngle;
 
-    /* ------------------------------------------------------------------ */
+    /* ====================================================== */
     void Start()
     {
         _cam = GetComponent<Camera>();
@@ -43,128 +50,184 @@ public class IsometricCamera : MonoBehaviour
             target.position = Vector3.zero;
         }
 
-        // start current values at initial desired values
-        _curYaw  = yaw;
-        _curDist = distance;
+        _curYaw       = yaw;
+        _curDist      = distance;
         _desiredPivot = target.position;
+
         UpdateTransformImmediate();
     }
 
-    /* ------------------------------------------------------------------ */
-    void Update()              // handle input only
+    /* -------------------- input -------------------- */
+    void Update()
     {
-        HandleMouse();
-        HandleTouch();
+        HandleMouse();   // Editor / desktop
+        HandleTouch();   // Android & iOS
 
-        // mouse-wheel zoom in editor
+        // mouse-wheel zoom (Editor convenience)
         float wheel = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(wheel) > 0.0001f) Zoom(-wheel * 20f);
     }
 
-    /* ------------------------------------------------------------------ */
+    /* -------------------- smoothing & transform -------------------- */
     void LateUpdate()
-{
-    // 1 ▸ ease the pivot itself
-    target.position = Vector3.SmoothDamp(target.position,
-                                         _desiredPivot,
-                                         ref _pivotVel,
-                                         smoothTime);
-
-    // 2 ▸ ease yaw & distance (this is your original code)
-    _curYaw  = Mathf.SmoothDampAngle(_curYaw,  yaw,  ref _curYawVel,  smoothTime);
-    _curDist = Mathf.SmoothDamp   (_curDist, distance, ref _curDistVel, smoothTime);
-
-    Vector3 dir = Quaternion.Euler(pitch, _curYaw, 0) * Vector3.back;
-    transform.position = target.position + dir * _curDist;
-    transform.LookAt(target);
-}
-
-    /* ───────── helpers ───────── */
-    void HandleMouse()
     {
-        if (Input.touchCount > 0) return;    // ignore mouse if touching
+        // 1 ▸ ease the pivot (pan target)
+        target.position = Vector3.SmoothDamp(target.position,
+                                             _desiredPivot,
+                                             ref _pivotVel,
+                                             smoothTime);
 
-        if (Input.GetMouseButtonDown(0) && !IsPointerOverUI(-1))
-            BeginDrag(Input.mousePosition);
+        // 2 ▸ ease yaw & distance
+        _curYaw  = Mathf.SmoothDampAngle(_curYaw,  yaw,  ref _curYawVel,  smoothTime);
+        _curDist = Mathf.SmoothDamp   (_curDist, distance, ref _curDistVel, smoothTime);
 
-        if (Input.GetMouseButton(0) && _dragging)
-            Drag(Input.mousePosition);
-
-        if (Input.GetMouseButtonUp(0) && _dragging)
-            _dragging = false;
+        Vector3 dir = Quaternion.Euler(pitch, _curYaw, 0f) * Vector3.back;
+        transform.position = target.position + dir * _curDist;
+        transform.LookAt(target);
     }
 
+    /* -------------------------------------------------------------- */
+    #region Mouse Input (Editor / Desktop)
+    void HandleMouse()
+{
+    if (Input.touchCount > 0) return;
+
+    if (Input.GetMouseButtonDown(0))              // LMB → pan
+        BeginPan(Input.mousePosition);
+
+    if (Input.GetMouseButton(0) && _isPanning)
+        Pan(Input.mousePosition);
+
+    if (Input.GetMouseButtonUp(0))
+        _isPanning = false;
+
+    if (Input.GetMouseButtonDown(1))              // RMB → orbit
+        BeginOrbit(Input.mousePosition);
+
+    if (Input.GetMouseButton(1) && _isOrbiting)
+        Orbit(Input.mousePosition);
+
+    if (Input.GetMouseButtonUp(1))
+        _isOrbiting = false;
+}
+
+    #endregion
+
+    /* -------------------------------------------------------------- */
+    #region Touch Input (Android / iOS)
     void HandleTouch()
     {
+        if (Input.touchCount == 0) { _isPanning = _isOrbiting = false; return; }
+
+        /* ---------- One-finger PAN ---------- */
         if (Input.touchCount == 1)
         {
-            Touch t = Input.GetTouch(0);
+            var t = Input.GetTouch(0);
 
             if (t.phase == TouchPhase.Began && !IsPointerOverUI(t.fingerId))
-                BeginDrag(t.position);
-            else if (t.phase == TouchPhase.Moved && _dragging)
-                Drag(t.position);
-            else if ((t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled) && _dragging)
-                _dragging = false;
+                BeginPan(t.position);
+            else if (t.phase == TouchPhase.Moved && _isPanning)
+                Pan(t.position);
+            else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                _isPanning = false;
         }
-        else if (Input.touchCount == 2)       // pinch-zoom
+        /* ---------- Two-finger Pinch / Orbit ---------- */
+        else if (Input.touchCount == 2)
         {
-            _dragging = false;               // cancel drag
             Touch t0 = Input.GetTouch(0);
             Touch t1 = Input.GetTouch(1);
 
-            float prev = Vector2.Distance(t0.position - t0.deltaPosition,
-                                          t1.position - t1.deltaPosition);
-            float curr = Vector2.Distance(t0.position, t1.position);
-            Zoom(-(curr - prev) * zoomSpeed);
+            // cancel pan
+            _isPanning = false;
+
+            /* pinch (zoom) */
+            float currDist  = Vector2.Distance(t0.position, t1.position);
+            if (_prevPinchDist > 0f)
+                Zoom(-(currDist - _prevPinchDist) * zoomSpeed);
+            _prevPinchDist = currDist;
+
+            /* twist (orbit) */
+            float currAngle = Mathf.Atan2(t1.position.y - t0.position.y,
+                                          t1.position.x - t0.position.x) * Mathf.Rad2Deg;
+            if (_prevTwistAngle != 0f)
+            {
+                float delta = Mathf.DeltaAngle(_prevTwistAngle, currAngle);
+                yaw += delta;
+            }
+            _prevTwistAngle = currAngle;
+
+            if (t0.phase == TouchPhase.Ended || t1.phase == TouchPhase.Ended ||
+                t0.phase == TouchPhase.Canceled || t1.phase == TouchPhase.Canceled)
+            {
+                _prevPinchDist  = 0f;
+                _prevTwistAngle = 0f;
+            }
         }
     }
+    #endregion
 
-    void BeginDrag(Vector2 pos)
-{
-    _dragging = true;
-    _prevPos  = pos;
-
-    /* 1 ▸ find the world point under the cursor/finger
-       ------------------------------------------------
-       Change the Plane if your ground isn’t at Y = 0, or
-       replace this whole block with Physics.Raycast if you
-       want to hit actual geometry instead of an infinite plane.
-    */
-    Plane ground = new Plane(Vector3.up, 0f);      // y = 0 plane
-    Ray   ray    = _cam.ScreenPointToRay(pos);
-
-    if (ground.Raycast(ray, out float hit))
+    /* -------------------------------------------------------------- */
+    #region Gestures
+    void BeginPan(Vector2 screenPos)
     {
-        target.position = ray.GetPoint(hit);
-        _desiredPivot = ray.GetPoint(hit);
-        /* 2 ▸ keep the smoothed values in sync so there’s no 1-frame jump */
-        _curYaw  = yaw;
-        _curDist = distance;
-        UpdateTransformImmediate();
+        _isPanning = true;
+        _prevPos   = screenPos;
     }
-}
 
-    void Drag(Vector2 pos)
+    void Pan(Vector2 screenPos)
     {
-        Vector2 delta = (pos - _prevPos) * (dragSpeed * Time.deltaTime);
-        _prevPos = pos;
-        yaw += delta.x;                      // desired yaw
+        /* project both previous & current positions onto the ground plane
+           and move the desired pivot by that world-space delta            */
+        if (!GroundPoint(screenPos,  out Vector3 curr)) return;
+        if (!GroundPoint(_prevPos,  out Vector3 prev)) return;
+
+        Vector3 offset = prev - curr;                    // how far we “dragged” in world
+        _desiredPivot += offset * (panSpeed * (distance / 30f));
+
+        _prevPos = screenPos;
+    }
+
+    void BeginOrbit(Vector2 screenPos)
+    {
+        _isOrbiting = true;
+        _prevPos    = screenPos;
+    }
+
+    void Orbit(Vector2 screenPos)
+    {
+        Vector2 delta = (screenPos - _prevPos) * (orbitSpeed * Time.deltaTime);
+        yaw    += delta.x;
+        _prevPos = screenPos;
     }
 
     void Zoom(float delta)
     {
         distance = Mathf.Clamp(distance + delta, minDistance, maxDistance);
     }
+    #endregion
 
-    bool IsPointerOverUI(int id)
-        => EventSystem.current &&
-           EventSystem.current.IsPointerOverGameObject(id);
+    /* -------------------------------------------------------------- */
+    bool GroundPoint(Vector2 screenPos, out Vector3 world)
+    {
+        // Change plane height if your ground isn’t at Y = 0
+        Plane ground = new Plane(Vector3.up, 0f);
+        Ray   ray    = _cam.ScreenPointToRay(screenPos);
+        if (ground.Raycast(ray, out float hit))
+        {
+            world = ray.GetPoint(hit);
+            return true;
+        }
+        world = default;
+        return false;
+    }
 
-    // used only once at Start
+    bool IsPointerOverUI(int id) =>
+        EventSystem.current && EventSystem.current.IsPointerOverGameObject(id);
+
+    /* -------------------------------------------------------------- */
     public void UpdateTransformImmediate()
     {
-        Vector3 dir = Quaternion.Euler(pitch, yaw, 0) * Vector3.back;
+        Vector3 dir = Quaternion.Euler(pitch, yaw, 0f) * Vector3.back;
         transform.position = target.position + dir * distance;
         transform.LookAt(target);
     }

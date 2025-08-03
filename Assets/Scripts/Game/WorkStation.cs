@@ -51,11 +51,7 @@ public class WorkStation : MonoBehaviour
         // transparent by default, but still receives clicks
         closeArea.GetComponent<Image>().color = new Color(0, 0, 0, 0);
 
-        closeArea.GetComponent<Button>().onClick.AddListener(() =>
-        {
-            Destroy(panel);
-            panel = null;
-        });
+        closeArea.GetComponent<Button>().onClick.AddListener(ClosePanel);
 
         /* Panel background --------------------------------------- */
         var panelBg = new GameObject("Panel", typeof(RectTransform), typeof(Image));
@@ -160,23 +156,15 @@ public class WorkStation : MonoBehaviour
     }
 
     /* ────────────────────────────────────────────────────────────── */
-    void ConfirmWork(InputField input)
-    {
-        if (!int.TryParse(input.text, out int hours)) hours = 0;
 
-        var stats = PlayerStats.Instance;
-        if (stats != null)
+    void ClosePanel()
+    {
+        if (panel != null)
         {
-            stats.ChangeMoney(hours * wagePerHour);
-            stats.SetHunger(stats.Hunger + hours * hungerDrain);
-            stats.SetFatigue(stats.Fatigue + hours * fatigueGain);
-            StatsHUD.Instance?.UpdateUI();
+            Destroy(panel);
+            panel = null;
         }
 
-        input.DeactivateInputField();
-        EventSystem.current.SetSelectedGameObject(null);
-        Destroy(panel);
-        panel = null;
         var houseDrag = FindObjectOfType<HouseDragRotate>();
         if (houseDrag != null) houseDrag.enabled = true;
 
@@ -186,9 +174,27 @@ public class WorkStation : MonoBehaviour
         var controller = FindObjectOfType<CharacterController>();
         if (controller != null) controller.enabled = true;
 
+        FindObjectOfType<StudioController>()?.ClearOverUI();
+    }
+    void ConfirmWork(InputField input)
+    {
+        if (!int.TryParse(input.text, out int hours)) hours = 0;
+
+        var stats = PlayerStats.Instance;
+        if (stats != null)
+        {
+            stats.ChangeMoney(hours * wagePerHour);
+            stats.SetHunger(stats.Hunger - hours * hungerDrain);
+            stats.SetFatigue(stats.Fatigue + hours * fatigueGain);
+            StatsHUD.Instance?.UpdateUI();
+        }
+
+        input.DeactivateInputField();
+        EventSystem.current.SetSelectedGameObject(null);
+        ClosePanel();
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
 
-        FindObjectOfType<StudioController>()?.ClearOverUI();
     }
 }
