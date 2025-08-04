@@ -37,6 +37,9 @@ public class IntroSequence : MonoBehaviour
 
     void Update()
     {
+        if (hasSeenIntro)
+            return;
+
         if (Input.GetMouseButtonDown(0) ||
             (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
         {
@@ -72,7 +75,7 @@ public class IntroSequence : MonoBehaviour
             yield break;
 
         currentPanel = Instantiate(panelPrefab, transform);
-        var cg = currentPanel.GetComponent<CanvasGroup>();
+        var cg = currentPanel.GetComponentInChildren<CanvasGroup>();
         if (cg != null) cg.alpha = 0f;
 
         var data = panels[currentIndex];
@@ -91,7 +94,7 @@ public class IntroSequence : MonoBehaviour
 
     IEnumerator FadeOut(GameObject go)
     {
-        var cg = go.GetComponent<CanvasGroup>();
+        var cg = go.GetComponentInChildren<CanvasGroup>();
         if (cg == null) yield break;
         for (float t = 0f; t < 1f; t += Time.deltaTime)
         {
@@ -103,7 +106,7 @@ public class IntroSequence : MonoBehaviour
 
     IEnumerator FadeIn(GameObject go)
     {
-        var cg = go.GetComponent<CanvasGroup>();
+        var cg = go.GetComponentInChildren<CanvasGroup>();
         if (cg == null) yield break;
         for (float t = 0f; t < 1f; t += Time.deltaTime)
         {
@@ -123,6 +126,7 @@ public class IntroSequence : MonoBehaviour
     {
         PlayerPrefs.SetInt("IntroSeen", 1);
         PlayerPrefs.Save();
+        hasSeenIntro = true;
         SendMessage("StartGuidance", SendMessageOptions.DontRequireReceiver);
         gameObject.SetActive(false);
     }
