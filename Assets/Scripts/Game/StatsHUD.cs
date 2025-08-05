@@ -12,6 +12,9 @@ public class StatsHUD : MonoBehaviour
     Text  moneyText;
     Image hungerBar;
     Image fatigueBar;
+    public Transform MoneyTextTransform  { get; private set; }
+    public Transform HungerBarTransform  { get; private set; }
+    public Transform FatigueBarTransform { get; private set; }
     float hungerBarMaxWidth;
     float fatigueBarMaxWidth;
     UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
@@ -65,8 +68,11 @@ public class StatsHUD : MonoBehaviour
 
         /* elements */
         moneyText  = CreateText ("MoneyText" , new Vector2(0, -5));
-        hungerBar  = CreateBar  ("HungerBar" , new Vector2(0, -25), Color.green, out hungerBarMaxWidth);
-        fatigueBar = CreateBar  ("FatigueBar", new Vector2(0, -45), Color.cyan, out fatigueBarMaxWidth);
+        MoneyTextTransform = moneyText.transform;
+        hungerBar  = CreateBar  ("HungerBar" , new Vector2(0, -25), Color.green, out hungerBarMaxWidth, out var hungerTransform);
+        HungerBarTransform = hungerTransform;
+        fatigueBar = CreateBar  ("FatigueBar", new Vector2(0, -45), Color.cyan, out fatigueBarMaxWidth, out var fatigueTransform);
+        FatigueBarTransform = fatigueTransform;
     }
 
     Text CreateText(string name, Vector2 pos)
@@ -90,11 +96,11 @@ public class StatsHUD : MonoBehaviour
         return t;
     }
 
-    Image CreateBar(string name, Vector2 pos, Color colour, out float maxWidth)
+    Image CreateBar(string name, Vector2 pos, Color colour, out float maxWidth, out Transform rootTransform)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(Image));
         go.transform.SetParent(transform, false);
-
+        rootTransform = go.transform;
         var rect = go.GetComponent<RectTransform>();
         rect.anchorMin        = new Vector2(0, 1);
         rect.anchorMax        = new Vector2(0, 1);

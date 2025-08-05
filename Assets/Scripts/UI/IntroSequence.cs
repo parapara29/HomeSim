@@ -214,7 +214,6 @@ public class IntroSequence : MonoBehaviour
         hasSeenIntro = true;
 
         SceneManager.LoadScene("DemoScene");
-        StatsHUD.CreateIfNeeded();
         TutorialManager.CreateIfNeeded();
     }
 }
