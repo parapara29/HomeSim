@@ -347,32 +347,34 @@ MonoBehaviour:
     text: "Agent Rivera: \u201CHey, Kavi! The Government of Naya City has picked
       you for our Urban Integration Program.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+  - background: {fileID: 21300000, guid: 09aa9fb40f73a5f419c7a65500523d05, type: 3}
     character: {fileID: 21300000, guid: db712495856fd3e45ae94f54e2a7cb34, type: 3}
     text: "Agent Rivera: \u201CHere\u2019s your starter fund\u2014$500. Enough to
       get you on your feet\u2026 if you\u2019re smart.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
-    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
+  - background: {fileID: 21300000, guid: dda8a6af1057a074f95e7d4f074dd398, type: 3}
+    character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
     text: "Agent Rivera: \u201CWork odd jobs, keep your hunger and energy up, and
       turn an empty flat into a real home.\u201D Kavi: \u201CSounds like the jungle\u2014just
       with different predators.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+  - background: {fileID: 21300000, guid: a286a5801dfb4f241ba0ac49d4036d57, type: 3}
     character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
     text: "Agent Rivera: \u201CEach hour of work pays $70. But skip meals or sleep
       and you\u2019ll crash. Spend wisely.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
-    character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
+  - background: {fileID: 21300000, guid: 2bdf6e1ed138d9a408342346df185ec6, type: 3}
+    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
     text: "Kavi: \u201CDeal. New jungle, new rules.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
-    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
+  - background: {fileID: 21300000, guid: c2cc7c7a2dc9f6b4d9332de1fd9bee46, type: 3}
+    character: {fileID: 0}
     text: "\u201CGuide Kavi through the concrete wilderness. Earn, eat, rest, and
       build the life he never knew he wanted.\u201D"
     holdTime: 2
   panelPrefabPath: Prefabs/IntroPanel
+  minFontSize: 24
+  maxFontSize: 48
 --- !u!850595691 &1276617806
 LightingSettings:
   m_ObjectHideFlags: 0

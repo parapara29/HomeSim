@@ -24,13 +24,13 @@ public class IntroSequence : MonoBehaviour
     [SerializeField] float minFontSize = 24f;
     [SerializeField] float maxFontSize = 48f;
 
-    int  currentIndex;
+    int currentIndex;
     bool hasSeenIntro;
 
     GameObject currentPanel;
     GameObject panelPrefab;
-    Image   backgroundImage;
-    Image   characterImage;
+    Image backgroundImage;
+    Image characterImage;
     TMP_Text dialogueText;
 
     /* ───────────────────────────────────────────── */
@@ -48,7 +48,7 @@ public class IntroSequence : MonoBehaviour
         }
 
         currentIndex = -1;
-        panelPrefab  = Resources.Load<GameObject>(panelPrefabPath);
+        panelPrefab = Resources.Load<GameObject>(panelPrefabPath);
         ShowNextPanel();
     }
 
@@ -95,8 +95,8 @@ public class IntroSequence : MonoBehaviour
         if (cg != null) cg.alpha = 0f;
 
         backgroundImage = currentPanel.transform.Find("Canvas/Background")?.GetComponent<Image>();
-        characterImage  = currentPanel.transform.Find("Canvas/Character") ?.GetComponent<Image>();
-        dialogueText    = currentPanel.transform.Find("Canvas/DialogueText")?.GetComponent<TMP_Text>();
+        characterImage = currentPanel.transform.Find("Canvas/Character")?.GetComponent<Image>();
+        dialogueText = currentPanel.transform.Find("Canvas/DialogueText")?.GetComponent<TMP_Text>();
 
         var skip = currentPanel.GetComponentInChildren<Button>();
         if (skip != null) skip.onClick.AddListener(Skip);
@@ -110,10 +110,10 @@ public class IntroSequence : MonoBehaviour
         {
             if (data.character != null)
             {
-                characterImage.sprite  = data.character;
+                characterImage.sprite = data.character;
                 characterImage.enabled = true;
             }
-            else  characterImage.enabled = false;
+            else characterImage.enabled = false;
         }
 
         if (dialogueText != null)
@@ -139,15 +139,15 @@ public class IntroSequence : MonoBehaviour
     void PrepareAutoSize(TMP_Text txt)
     {
         txt.enableAutoSizing = true;
-        txt.fontSizeMin      = minFontSize;
-        txt.fontSizeMax      = maxFontSize;
+        txt.fontSizeMin = minFontSize;
+        txt.fontSizeMax = maxFontSize;
 
         txt.maxVisibleCharacters = int.MaxValue;   // show full text
         txt.ForceMeshUpdate();                     // let TMP calculate
         float fittedSize = txt.fontSize;           // read result
 
-        txt.enableAutoSizing    = false;           // lock it
-        txt.fontSize            = fittedSize;
+        txt.enableAutoSizing = false;           // lock it
+        txt.fontSize = fittedSize;
         txt.maxVisibleCharacters = 0;              // hide again
     }
 
@@ -184,14 +184,14 @@ public class IntroSequence : MonoBehaviour
     }
     bool IsPointerOverUI()
     {
-    #if UNITY_EDITOR || UNITY_STANDALONE
+#if UNITY_EDITOR || UNITY_STANDALONE
         return EventSystem.current.IsPointerOverGameObject();
-    #else                                   // touch devices
+#else                                   // touch devices
         if (Input.touchCount > 0)
             return EventSystem.current.IsPointerOverGameObject(
                 Input.GetTouch(0).fingerId);
         return false;
-    #endif
+#endif
     }
 
     IEnumerator RevealText(TMP_Text txt)
@@ -212,8 +212,14 @@ public class IntroSequence : MonoBehaviour
         PlayerPrefs.SetInt("IntroSeen", 1);
         PlayerPrefs.Save();
         hasSeenIntro = true;
-
+        SceneManager.sceneLoaded += OnDemoSceneLoaded;
         SceneManager.LoadScene("DemoScene");
+        TutorialManager.CreateIfNeeded();
+    }
+    void OnDemoSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != "DemoScene") return;
+        SceneManager.sceneLoaded -= OnDemoSceneLoaded;
         TutorialManager.CreateIfNeeded();
     }
 }
