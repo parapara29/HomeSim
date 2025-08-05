@@ -297,6 +297,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1135357960}
+  - component: {fileID: 1135357961}
   m_Layer: 0
   m_Name: IntroManager
   m_TagString: Untagged
@@ -319,6 +320,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1135357961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1135357959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 594f50c59ae51f9489ea9f396a0fdd7e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  panels:
+  - background: {fileID: 21300000, guid: 00725c259b362184d9c6f2daabe2f98f, type: 3}
+    character: {fileID: 21300000, guid: 00725c259b362184d9c6f2daabe2f98f, type: 3}
+    text: "Welcome to HomeSim!"
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 5b61b5d76e7c00f438d99c16aea37348, type: 3}
+    character: {fileID: 21300000, guid: 5b61b5d76e7c00f438d99c16aea37348, type: 3}
+    text: "Use the intro to learn the basics."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 35e57fb8dd0e91040b131435ac9bd489, type: 3}
+    character: {fileID: 21300000, guid: 35e57fb8dd0e91040b131435ac9bd489, type: 3}
+    text: "Build your dream house."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 41c852714bec2344c8e248cad3a5fdb3, type: 3}
+    character: {fileID: 21300000, guid: 41c852714bec2344c8e248cad3a5fdb3, type: 3}
+    text: "Decorate rooms with furniture."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 1517f089ed7c2cf4ab3fa83ede0b5c28, type: 3}
+    character: {fileID: 21300000, guid: 1517f089ed7c2cf4ab3fa83ede0b5c28, type: 3}
+    text: "Meet your virtual neighbors."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 298fda4ec8d3a0b4685114e9fc06c6b6, type: 3}
+    character: {fileID: 21300000, guid: 298fda4ec8d3a0b4685114e9fc06c6b6, type: 3}
+    text: "Complete quests to earn coins."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: 870c3d836fa17432489314060bdffc58, type: 3}
+    character: {fileID: 21300000, guid: 870c3d836fa17432489314060bdffc58, type: 3}
+    text: "Unlock new items as you progress."
+    holdTime: 0.5
+  - background: {fileID: 21300000, guid: f3c56752f850f984a9e377ec2f2d27c6, type: 3}
+    character: {fileID: 21300000, guid: f3c56752f850f984a9e377ec2f2d27c6, type: 3}
+    text: "Let's get started!"
+    holdTime: 0.5
+  panelPrefabPath: Prefabs/IntroPanel
 --- !u!850595691 &1276617806
 LightingSettings:
   m_ObjectHideFlags: 0
