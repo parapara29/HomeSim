@@ -313,9 +313,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1135357959}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 805.9857, y: 220.47432, z: 210.1709}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1007.48206, y: 275.5929, z: 262.7136}
+  m_LocalScale: {x: 1.2499998, y: 1.2499998, z: 1.2499998}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -334,37 +334,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   panels:
   - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
-    character: {fileID: 21300000, guid: 4327ce6d4889545f1addd3a077b0bd05, type: 3}
+    character: {fileID: 0}
     text: Hidden in the Emerald Canopy lives Kavi, a boy who can outrun panthers
       but has never seen a traffic light!
     holdTime: 2
   - background: {fileID: 21300000, guid: dde9ee06cccfa8745b3ef4ed1012bc1b, type: 3}
-    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
-    text: Use the intro to learn the basics.
+    character: {fileID: 0}
+    text: A small government hover-craft descends.
     holdTime: 2
   - background: {fileID: 21300000, guid: 2d1fd2f6fb864e74881307f6c3d59886, type: 3}
     character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
-    text: Build your dream house.
+    text: "Agent Rivera: \u201CHey, Kavi! The Government of Naya City has picked
+      you for our Urban Integration Program.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 09aa9fb40f73a5f419c7a65500523d05, type: 3}
-    character: {fileID: 21300000, guid: 41c852714bec2344c8e248cad3a5fdb3, type: 3}
-    text: Decorate rooms with furniture.
+  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+    character: {fileID: 21300000, guid: db712495856fd3e45ae94f54e2a7cb34, type: 3}
+    text: "Agent Rivera: \u201CHere\u2019s your starter fund\u2014$500. Enough to
+      get you on your feet\u2026 if you\u2019re smart.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 1517f089ed7c2cf4ab3fa83ede0b5c28, type: 3}
-    character: {fileID: 21300000, guid: 1517f089ed7c2cf4ab3fa83ede0b5c28, type: 3}
-    text: Meet your virtual neighbors.
+  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
+    text: "Agent Rivera: \u201CWork odd jobs, keep your hunger and energy up, and
+      turn an empty flat into a real home.\u201D Kavi: \u201CSounds like the jungle\u2014just
+      with different predators.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 298fda4ec8d3a0b4685114e9fc06c6b6, type: 3}
-    character: {fileID: 21300000, guid: 298fda4ec8d3a0b4685114e9fc06c6b6, type: 3}
-    text: Complete quests to earn coins.
+  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+    character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
+    text: "Agent Rivera: \u201CEach hour of work pays $70. But skip meals or sleep
+      and you\u2019ll crash. Spend wisely.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: 870c3d836fa17432489314060bdffc58, type: 3}
-    character: {fileID: 21300000, guid: 870c3d836fa17432489314060bdffc58, type: 3}
-    text: Unlock new items as you progress.
+  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+    character: {fileID: 21300000, guid: c4b44d367b394c8428eb1f96229b3f32, type: 3}
+    text: "Kavi: \u201CDeal. New jungle, new rules.\u201D"
     holdTime: 2
-  - background: {fileID: 21300000, guid: f3c56752f850f984a9e377ec2f2d27c6, type: 3}
-    character: {fileID: 21300000, guid: f3c56752f850f984a9e377ec2f2d27c6, type: 3}
-    text: Let's get started!
+  - background: {fileID: 21300000, guid: 796344bcb598bf74d946761bea03d5ce, type: 3}
+    character: {fileID: 21300000, guid: b823e227eb2a7cd4d838138d99455337, type: 3}
+    text: "\u201CGuide Kavi through the concrete wilderness. Earn, eat, rest, and
+      build the life he never knew he wanted.\u201D"
     holdTime: 2
   panelPrefabPath: Prefabs/IntroPanel
 --- !u!850595691 &1276617806
