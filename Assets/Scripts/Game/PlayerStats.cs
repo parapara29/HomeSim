@@ -4,7 +4,7 @@ public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats Instance { get; private set; }
     const string MoneyKey = "PlayerMoney";
-    [SerializeField] private int money = 1000;
+    [SerializeField] private int money = 500;
     [SerializeField, Range(0f,1f)] private float hunger = 1f;
     [SerializeField, Range(0f,1f)] private float fatigue = 0f;
 

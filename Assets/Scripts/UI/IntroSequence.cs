@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 [System.Serializable]
 public struct PanelData
@@ -55,11 +56,13 @@ public class IntroSequence : MonoBehaviour
     {
         if (hasSeenIntro) return;
 
-        if (Input.GetMouseButtonDown(0) ||
-            (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
-        {
+        bool mouseDown = Input.GetMouseButtonDown(0);
+        bool touchDown = (Input.touchCount > 0 &&
+                        Input.GetTouch(0).phase == TouchPhase.Began);
+
+        // advance only if the tap/click is NOT over a UI element
+        if ((mouseDown || touchDown) && !IsPointerOverUI())
             ShowNextPanel();
-        }
     }
 
     /* ───────────────────────────────────────────── */
@@ -179,6 +182,17 @@ public class IntroSequence : MonoBehaviour
         currentIndex = panels.Length - 1;
         ShowNextPanel();
     }
+    bool IsPointerOverUI()
+    {
+    #if UNITY_EDITOR || UNITY_STANDALONE
+        return EventSystem.current.IsPointerOverGameObject();
+    #else                                   // touch devices
+        if (Input.touchCount > 0)
+            return EventSystem.current.IsPointerOverGameObject(
+                Input.GetTouch(0).fingerId);
+        return false;
+    #endif
+    }
 
     IEnumerator RevealText(TMP_Text txt)
     {
@@ -201,5 +215,6 @@ public class IntroSequence : MonoBehaviour
 
         SceneManager.LoadScene("DemoScene");
         StatsHUD.CreateIfNeeded();
+        TutorialManager.CreateIfNeeded();
     }
 }
