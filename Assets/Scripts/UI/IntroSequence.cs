@@ -19,7 +19,7 @@ public class IntroSequence : MonoBehaviour
     [SerializeField] string panelPrefabPath = "Prefabs/IntroPanel";
 
     int currentIndex;
-    bool hasSeenIntro = PlayerPrefs.GetInt("IntroSeen", 0) == 1;
+    bool hasSeenIntro;
 
     GameObject currentPanel;
     GameObject panelPrefab;
@@ -27,6 +27,11 @@ public class IntroSequence : MonoBehaviour
     Image characterImage;
     TMP_Text dialogueText;
 
+    void Awake()
+    {
+        // Safe place for PlayerPrefs
+        hasSeenIntro = PlayerPrefs.GetInt("IntroSeen", 0) == 1;
+    }
     void Start()
     {
         if (hasSeenIntro)
@@ -152,5 +157,6 @@ public class IntroSequence : MonoBehaviour
         PlayerPrefs.Save();
         hasSeenIntro = true;
         SceneManager.LoadScene("DemoScene");
+        StatsHUD.CreateIfNeeded();
     }
 }

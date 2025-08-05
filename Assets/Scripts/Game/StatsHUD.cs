@@ -127,7 +127,7 @@ public class StatsHUD : MonoBehaviour
 
     void Subscribe()
     {
-        sceneLoadedHandler = (_, __) => UpdateUI();
+        sceneLoadedHandler = OnSceneLoaded;
         SceneManager.sceneLoaded += sceneLoadedHandler;
         if (PlayerStats.Instance != null)
         {
@@ -163,7 +163,10 @@ public class StatsHUD : MonoBehaviour
 
     void OnSceneLoaded(Scene _, LoadSceneMode __)
     {
-        UpdateUI();
+        var sceneName = SceneManager.GetActiveScene().name;
+        bool isIntro = sceneName == "IntroStart" || sceneName == "IntoStart";
+        gameObject.SetActive(!isIntro);
+        if (!isIntro) UpdateUI();
     }
 
     public void UpdateUI()
