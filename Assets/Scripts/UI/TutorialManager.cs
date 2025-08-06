@@ -78,8 +78,27 @@ public class TutorialManager : MonoBehaviour
 
         /* Tour */
         yield return PanAndExplain(houseTarget, "This is your house.");
-        yield return PanAndExplain(workTarget,  "This is where you work.");
-        yield return PanAndExplain(foodTarget,  "Here you can get food.");
+        yield return WaitForBuildingClick();
+        yield return ExplainHousePanel();
+        yield return PanAndExplain(workTarget, "This is where you work.");
+        yield return ExplainWorkPanel();
+        yield return PanAndExplain(foodTarget, "Here you can get food.");
+        ShowDialogue("Click the food building to open the food menu.");
+        yield return WaitForPanel("FoodPanel", true);
+        HideDialogue();
+
+        yield return ExplainButton(
+            "RiceButton",
+            "Rice costs 100 coins and restores a good amount of hunger."
+        );
+        yield return ExplainButton(
+            "BurgerButton",
+            "Burgers are cheaper at 40 coins but only restore a little hunger."
+        );
+
+        ShowDialogue("Close the food menu to continue.");
+        yield return WaitForPanel("FoodPanel", false);
+        HideDialogue();
 
         /* HUD highlights */
         yield return ShowHudHighlights();
@@ -165,7 +184,7 @@ public class TutorialManager : MonoBehaviour
         if (!cam || zoomInDistance <= 0f || zoomInTime <= 0f) yield break;
 
         Vector3 startPos = cam.transform.position;
-        Vector3 endPos   = startPos + cam.transform.forward * (-zoomInDistance);
+        Vector3 endPos   = startPos + cam.transform.forward * zoomInDistance;
 
         float elapsed = 0f;
         while (elapsed < zoomInTime)
@@ -178,7 +197,76 @@ public class TutorialManager : MonoBehaviour
         }
         cam.transform.position = endPos;
     }
+    IEnumerator WaitForBuildingClick()
+    {
+        ShowDialogue("Click the house to open its panel.");
+        yield return new WaitUntil(() => GameObject.Find("RestPanel") != null);
+        HideDialogue();
+    }
 
+    IEnumerator ExplainHousePanel()
+    {
+        var panel = GameObject.Find("RestPanel");
+        if (!panel) yield break;
+
+        var root = panel.transform.Find("Panel") ?? panel.transform;
+        var editButton = root.Find("EditButton");
+        var restButton = root.Find("RestButton");
+
+        if (editButton)
+            yield return HighlightWithDialogue(editButton, "Edit furniture inside your house.");
+        if (restButton)
+            yield return HighlightWithDialogue(restButton, "Rest here to recover your energy.");
+
+        ShowDialogue("Close the panel to continue.");
+        yield return new WaitUntil(() => GameObject.Find("RestPanel") == null);
+        HideDialogue();
+    }
+
+    IEnumerator ShowStationPanel(
+        string panelName,
+        string clickMessage,
+        string hoursPath,
+        string hoursMessage,
+        string confirmPath,
+        string confirmMessage)
+    {
+        ShowDialogue(clickMessage);
+        yield return new WaitUntil(() => GameObject.Find(panelName) != null);
+        HideDialogue();
+
+        var panel = GameObject.Find(panelName);
+        var hours = panel ? panel.transform.Find(hoursPath) : null;
+        if (hours) yield return HighlightWithDialogue(hours, hoursMessage);
+
+        var confirm = panel ? panel.transform.Find(confirmPath) : null;
+        if (confirm) yield return HighlightWithDialogue(confirm, confirmMessage);
+
+        yield return new WaitUntil(() => GameObject.Find(panelName) == null);
+    }
+
+    IEnumerator ExplainWorkPanel()
+    {
+        yield return ShowStationPanel(
+            "WorkPanel",
+            "Click the work building to open the work panel.",
+            "Panel/HoursInput",
+            "Enter how many hours you want to work.",
+            "Panel/ConfirmButton",
+            "Press Work to start working."
+        );
+    }
+
+    IEnumerator WaitForPanel(string panelName, bool open)
+    {
+        yield return new WaitUntil(() => (GameObject.Find(panelName) != null) == open);
+    }
+
+    IEnumerator ExplainButton(string buttonName, string message)
+    {
+        var t = GameObject.Find(buttonName)?.transform;
+        if (t) yield return HighlightWithDialogue(t, message);
+    }
     /* ─────────────────────────────── HUD highlight ─────────────────────────────── */
     IEnumerator ShowHudHighlights()
     {
@@ -289,12 +377,22 @@ public class TutorialManager : MonoBehaviour
         PlayerPrefs.Save();
 
         if (playerController) playerController.enabled = true;
-        if (tutorialPanel && tutorialPanel.activeSelf)
+        if (tutorialPanel)
+        {
             tutorialPanel.SetActive(false);
+            Destroy(tutorialPanel);
+            tutorialPanel = null;
+        }
 
-        gameObject.SetActive(false);
+        StopAllCoroutines();
+        Destroy(gameObject);
     }
 
+    void OnDestroy()
+    {
+        StopAllCoroutines();
+        if (Instance == this) Instance = null;
+    }
     /* ─────────────────────────────── Landmark re-binding ─────────────────────────────── */
     void RebindLandmarks()
     {
