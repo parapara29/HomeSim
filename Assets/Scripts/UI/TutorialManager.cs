@@ -1,8 +1,9 @@
-// TutorialManager.cs – robust camera reacquisition & continuous motion after scene changes
+// TutorialManager.cs – tag-driven landmarks, HUD explanations, and zoom-in camera pans
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class TutorialManager : MonoBehaviour
 {
@@ -22,14 +23,16 @@ public class TutorialManager : MonoBehaviour
     /* ─────────────────────────────── Serialized Fields ─────────────────────────────── */
     [SerializeField] private MonoBehaviour playerController;
 
-    [Header("Landmarks (assign in Inspector)")]
-    [SerializeField] private Transform houseTarget;
-    [SerializeField] private Transform workTarget;
-    [SerializeField] private Transform foodTarget;
+    [Header("Landmark Tags")]
+    [SerializeField] private string houseTag = "House";
+    [SerializeField] private string workTag  = "Work";
+    [SerializeField] private string foodTag  = "Food";
 
     [Header("Camera")]
     [SerializeField] private Camera tutorialCamera;       // optional override; MainCamera if null
     [SerializeField] private float cameraMoveTime = 2f;   // seconds per pan
+    [SerializeField] private float zoomInDistance = 5f;   // extra metres to move forward
+    [SerializeField] private float zoomInTime = 0.6f;     // seconds for zoom-in
 
     [Header("Isometric Settings")]
     [SerializeField] private float isoPitch    = 30f;
@@ -41,8 +44,16 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private Text tutorialText;
 
     /* ─────────────────────────────── Runtime Helpers ─────────────────────────────── */
-    readonly List<GameObject> overlayObjects   = new();
+    readonly List<GameObject> overlayObjects     = new();
     readonly List<Behaviour>  disabledBehaviours = new();
+
+    Transform houseTarget, workTarget, foodTarget;
+
+    /* ─────────────────────────────── Unity Hooks ─────────────────────────────── */
+    void OnEnable()  => SceneManager.sceneLoaded += OnSceneLoaded;
+    void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+    void Start()    => RebindLandmarks();
+    void OnSceneLoaded(Scene sc, LoadSceneMode mode) => RebindLandmarks();
 
     /* ─────────────────────────────── Public Entry ─────────────────────────────── */
     public void ShowTutorial() => StartCoroutine(RunTutorial());
@@ -50,6 +61,8 @@ public class TutorialManager : MonoBehaviour
     /* ─────────────────────────────── Main Coroutine ─────────────────────────────── */
     IEnumerator RunTutorial()
     {
+        RebindLandmarks();                    // ensure tags resolved
+
         if (playerController) playerController.enabled = false;
 
         Camera cam = PrepareCamera();
@@ -78,6 +91,17 @@ public class TutorialManager : MonoBehaviour
     /* ─────────────────────────────── Pan helpers ─────────────────────────────── */
     IEnumerator PanAndExplain(Transform target, string message)
     {
+        if (target)
+        {
+            Debug.Log(
+                $"[Tutorial] About to pan:\n" +
+                $" • target = \"{target.name}\" (scene = \"{target.gameObject.scene.name}\")\n" +
+                $" • hierarchy = {PathInHierarchy(target)}\n" +
+                $" • local   = {target.localPosition}\n" +
+                $" • world   = {target.position}"
+            );
+        }
+
         yield return PanToTarget(target);
         ShowDialogue(message);
         yield return WaitForClick();
@@ -93,13 +117,15 @@ public class TutorialManager : MonoBehaviour
         Vector3 desiredPos = target.position + isoRot * Vector3.back * isoDistance;
         Quaternion desiredRot = Quaternion.LookRotation(target.position - desiredPos, Vector3.up);
 
+        Debug.Log($"[Tutorial] Target \"{target.name}\" @ {target.position} ⇒ desired camera pos {desiredPos}, rot {desiredRot.eulerAngles}");
+
         float elapsed = 0f;
         Camera activeCam = PrepareCamera();
         if (!activeCam) yield break;
 
         Vector3 startPos = activeCam.transform.position;
         Quaternion startRot = activeCam.transform.rotation;
-        Debug.Log($"Panning from {startPos} to {desiredPos}  (target = {target.position})");
+        Debug.Log($"[Tutorial] Panning from {startPos} to {desiredPos}");
 
         while (elapsed < cameraMoveTime)
         {
@@ -107,8 +133,7 @@ public class TutorialManager : MonoBehaviour
             if (activeCam == null)
             {
                 activeCam = PrepareCamera();
-                if (!activeCam) yield break;   // still missing – abort
-                // re‑anchor interpolation to new camera pose, keep elapsed progress
+                if (!activeCam) yield break;
                 startPos = activeCam.transform.position;
                 startRot = activeCam.transform.rotation;
             }
@@ -126,7 +151,28 @@ public class TutorialManager : MonoBehaviour
         if (activeCam)
         {
             activeCam.transform.SetPositionAndRotation(desiredPos, desiredRot);
+            yield return ZoomIn(activeCam, desiredRot);
         }
+    }
+
+    /* small forward zoom after arriving */
+    IEnumerator ZoomIn(Camera cam, Quaternion lookRot)
+    {
+        if (!cam || zoomInDistance <= 0f || zoomInTime <= 0f) yield break;
+
+        Vector3 startPos = cam.transform.position;
+        Vector3 endPos   = startPos + cam.transform.forward * (-zoomInDistance);
+
+        float elapsed = 0f;
+        while (elapsed < zoomInTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / zoomInTime);
+            cam.transform.position = Vector3.Lerp(startPos, endPos, t);
+            cam.transform.rotation = lookRot;       // keep rotation locked
+            yield return null;
+        }
+        cam.transform.position = endPos;
     }
 
     /* ─────────────────────────────── HUD highlight ─────────────────────────────── */
@@ -135,9 +181,23 @@ public class TutorialManager : MonoBehaviour
         var hud = StatsHUD.Instance;
         if (!hud) yield break;
 
-        yield return HighlightWithDialogue(hud.MoneyTextTransform,  "This shows how much money you have.");
-        yield return HighlightWithDialogue(hud.HungerBarTransform, "This shows your hunger level.");
-        yield return HighlightWithDialogue(hud.FatigueBarTransform,"This shows your fatigue level.");
+        // ① Money
+        yield return HighlightWithDialogue(
+            hud.MoneyTextTransform,
+            "Money shows how many coins you have. Earn more by working!"
+        );
+
+        // ② Hunger
+        yield return HighlightWithDialogue(
+            hud.HungerBarTransform,
+            "Hunger decreases while you work and refills when you eat food."
+        );
+
+        // ③ Fatigue
+        yield return HighlightWithDialogue(
+            hud.FatigueBarTransform,
+            "Fatigue rises as you work and drops again when you rest."
+        );
     }
 
     IEnumerator HighlightWithDialogue(Transform target, string message)
@@ -159,7 +219,8 @@ public class TutorialManager : MonoBehaviour
 
     IEnumerator WaitForClick()
     {
-        yield return new WaitUntil(() => Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began));
+        yield return new WaitUntil(() => Input.GetMouseButtonDown(0) ||
+               (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began));
     }
 
     /* ─────────────────────────────── Overlay helpers ─────────────────────────────── */
@@ -179,14 +240,24 @@ public class TutorialManager : MonoBehaviour
         overlayObjects.Add(go);
         return go;
     }
+    string PathInHierarchy(Transform t)
+    {
+        if (!t) return "<null>";
+        string path = t.name;
+        while (t.parent) { t = t.parent; path = $"{t.name}/{path}"; }
+        return path;
+    }
 
     /* ─────────────────────────────── Camera utilities ─────────────────────────────── */
     Camera PrepareCamera()
     {
-        Camera cam = tutorialCamera ? tutorialCamera : (Camera.main ? Camera.main : (GameObject.Find("Main Camera")?.GetComponent<Camera>()));
+        Camera cam = tutorialCamera ? tutorialCamera :
+                     (Camera.main ? Camera.main :
+                     (GameObject.Find("Main Camera")?.GetComponent<Camera>()));
         if (!cam) return null;
 
-        // disable any motion scripts once per camera instance
+        Debug.Log($"[Tutorial] Using camera \"{cam.name}\" @ {cam.transform.position}");
+
         foreach (var b in cam.GetComponents<Behaviour>())
         {
             if (b != cam && b.enabled)
@@ -213,7 +284,23 @@ public class TutorialManager : MonoBehaviour
         if (playerController) playerController.enabled = true;
     }
 
-    /* ─────────────────────────────── Bootstrap helper ─────────────────────────────── */
+    /* ─────────────────────────────── Landmark re-binding ─────────────────────────────── */
+    void RebindLandmarks()
+    {
+        bool NeedsRebind(Transform t) =>
+            !t || !t.gameObject.activeInHierarchy || t.gameObject.scene.name == "DontDestroyOnLoad";
+
+        if (NeedsRebind(houseTarget))
+            houseTarget = GameObject.FindWithTag(houseTag)?.transform;
+
+        if (NeedsRebind(workTarget))
+            workTarget  = GameObject.FindWithTag(workTag)?.transform;
+
+        if (NeedsRebind(foodTarget))
+            foodTarget  = GameObject.FindWithTag(foodTag)?.transform;
+    }
+
+    /* ─────────────────────────────── Bootstrap helper (unchanged) ─────────────────────────────── */
     public static TutorialManager CreateIfNeeded()
     {
         if (Instance != null)
