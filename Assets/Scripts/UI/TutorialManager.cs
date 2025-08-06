@@ -95,6 +95,14 @@ public class TutorialManager : MonoBehaviour
         float t = 0f;
         while (t < 1f)
         {
+            if (cam == null)
+            {
+                cam = Camera.main;
+                if (cam == null)
+                    yield break;
+                startPos = cam.transform.position;
+                startRot = cam.transform.rotation;
+            }
             t += Time.deltaTime / cameraMoveTime;
             cam.transform.position = Vector3.Lerp(startPos, endPos, t);
             cam.transform.rotation = Quaternion.Lerp(startRot, endRot, t);
