@@ -60,15 +60,25 @@ public class TutorialManager : MonoBehaviour
         var hud = StatsHUD.Instance;
         if (hud != null)
         {
-            CreateHighlight(hud.MoneyTextTransform);
-            yield return new WaitForSeconds(1f);
-            CreateHighlight(hud.HungerBarTransform);
-            yield return new WaitForSeconds(1f);
-            CreateHighlight(hud.FatigueBarTransform);
-            yield return new WaitForSeconds(1f);
+            var highlight = CreateHighlight(hud.MoneyTextTransform);
+            ShowDialogue("This shows how much money you have.");
+            yield return WaitForClick();
+            HideDialogue();
+            if (highlight != null) Destroy(highlight);
+
+            highlight = CreateHighlight(hud.HungerBarTransform);
+            ShowDialogue("This shows your hunger level.");
+            yield return WaitForClick();
+            HideDialogue();
+            if (highlight != null) Destroy(highlight);
+
+            highlight = CreateHighlight(hud.FatigueBarTransform);
+            ShowDialogue("This shows your fatigue level.");
+            yield return WaitForClick();
+            HideDialogue();
+            if (highlight != null) Destroy(highlight);
         }
-        yield return WaitForClick();
-        HideDialogue();
+        
 
         EndTutorial();
     }
