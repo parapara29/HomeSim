@@ -56,7 +56,11 @@ public class TutorialManager : MonoBehaviour
     void OnSceneLoaded(Scene sc, LoadSceneMode mode) => RebindLandmarks();
 
     /* ─────────────────────────────── Public Entry ─────────────────────────────── */
-    public void ShowTutorial() => StartCoroutine(RunTutorial());
+    public void ShowTutorial()
+    {
+        gameObject.SetActive(true);
+        StartCoroutine(RunTutorial());
+    }
 
     /* ─────────────────────────────── Main Coroutine ─────────────────────────────── */
     IEnumerator RunTutorial()
@@ -178,22 +182,25 @@ public class TutorialManager : MonoBehaviour
     /* ─────────────────────────────── HUD highlight ─────────────────────────────── */
     IEnumerator ShowHudHighlights()
     {
-        var hud = StatsHUD.Instance;
+        var hud = StatsHUD.CreateIfNeeded();
         if (!hud) yield break;
 
         // ① Money
+        yield return new WaitUntil(() => hud.MoneyTextTransform != null);
         yield return HighlightWithDialogue(
             hud.MoneyTextTransform,
             "Money shows how many coins you have. Earn more by working!"
         );
 
         // ② Hunger
+        yield return new WaitUntil(() => hud.HungerBarTransform != null);
         yield return HighlightWithDialogue(
             hud.HungerBarTransform,
             "Hunger decreases while you work and refills when you eat food."
         );
 
         // ③ Fatigue
+        yield return new WaitUntil(() => hud.FatigueBarTransform != null);
         yield return HighlightWithDialogue(
             hud.FatigueBarTransform,
             "Fatigue rises as you work and drops again when you rest."
@@ -282,6 +289,10 @@ public class TutorialManager : MonoBehaviour
         PlayerPrefs.Save();
 
         if (playerController) playerController.enabled = true;
+        if (tutorialPanel && tutorialPanel.activeSelf)
+            tutorialPanel.SetActive(false);
+
+        gameObject.SetActive(false);
     }
 
     /* ─────────────────────────────── Landmark re-binding ─────────────────────────────── */
@@ -303,9 +314,11 @@ public class TutorialManager : MonoBehaviour
     /* ─────────────────────────────── Bootstrap helper (unchanged) ─────────────────────────────── */
     public static TutorialManager CreateIfNeeded()
     {
+        bool seen = PlayerPrefs.GetInt("TutorialSeen", 0) != 0;
         if (Instance != null)
         {
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) Instance.ShowTutorial();
+            if (!seen) Instance.ShowTutorial();
+            else Instance.gameObject.SetActive(false);
             return Instance;
         }
 
@@ -313,7 +326,8 @@ public class TutorialManager : MonoBehaviour
         if (existing)
         {
             Instance = existing;
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) existing.ShowTutorial();
+            if (!seen) existing.ShowTutorial();
+            else existing.gameObject.SetActive(false);
             return existing;
         }
 
@@ -323,7 +337,8 @@ public class TutorialManager : MonoBehaviour
             var mgr = Instantiate(prefab);
             DontDestroyOnLoad(mgr.gameObject);
             Instance = mgr;
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) mgr.ShowTutorial();
+            if (!seen) mgr.ShowTutorial();
+            else mgr.gameObject.SetActive(false);
             return mgr;
         }
 
@@ -331,7 +346,8 @@ public class TutorialManager : MonoBehaviour
         DontDestroyOnLoad(go);
         var newMgr = go.AddComponent<TutorialManager>();
         Instance = newMgr;
-        if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) newMgr.ShowTutorial();
+        if (!seen) newMgr.ShowTutorial();
+        else newMgr.gameObject.SetActive(false);
         return newMgr;
     }
 }
