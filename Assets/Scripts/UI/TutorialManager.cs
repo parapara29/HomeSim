@@ -104,7 +104,7 @@ public class TutorialManager : MonoBehaviour
         yield return ShowHudHighlights();
 
         /* Final message */
-        ShowDialogue("Have Fun!");
+        ShowDialogue("That is all for the tutorial! Have fun!");
         yield return WaitForClick();
         HideDialogue();
 
@@ -313,10 +313,17 @@ public class TutorialManager : MonoBehaviour
     void HideDialogue() { if (tutorialPanel) tutorialPanel.SetActive(false); }
 
     IEnumerator WaitForClick()
-    {
-        yield return new WaitUntil(() => Input.GetMouseButtonDown(0) ||
-               (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began));
-    }
+{
+    // 1️⃣ be sure any old click / touch is fully released
+    while (Input.GetMouseButton(0) || Input.touchCount > 0)
+        yield return null;
+
+    // 2️⃣ now wait for the NEXT click / touch
+    yield return new WaitUntil(() =>
+        Input.GetMouseButtonDown(0) ||
+        (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began));
+}
+
 
     /* ─────────────────────────────── Overlay helpers ─────────────────────────────── */
     GameObject CreateHighlight(Transform target)
