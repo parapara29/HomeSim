@@ -1,11 +1,13 @@
+// TutorialManager.cs – robust camera reacquisition & continuous motion after scene changes
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+
 public class TutorialManager : MonoBehaviour
 {
+    /* ───────────────────────────────────── Singleton ───────────────────────────────────── */
     public static TutorialManager Instance { get; private set; }
-
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -16,238 +18,232 @@ public class TutorialManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    [Tooltip("Optional list of highlight or overlay objects spawned during the tutorial")]
-    [SerializeField] private List<GameObject> overlayObjects = new List<GameObject>();
 
-    [Tooltip("Components that were disabled while the tutorial ran and should be re-enabled when finished")]
-    [SerializeField] private List<Behaviour> disabledUIElements = new List<Behaviour>();
-
-    [Tooltip("Player control script that should be re-enabled after the tutorial")]
+    /* ─────────────────────────────── Serialized Fields ─────────────────────────────── */
     [SerializeField] private MonoBehaviour playerController;
 
-    [Header("Camera Tour")]
-    [SerializeField] private Camera tutorialCamera;
+    [Header("Landmarks (assign in Inspector)")]
     [SerializeField] private Transform houseTarget;
     [SerializeField] private Transform workTarget;
     [SerializeField] private Transform foodTarget;
-    [SerializeField] private float cameraMoveTime = 2f;
+
+    [Header("Camera")]
+    [SerializeField] private Camera tutorialCamera;       // optional override; MainCamera if null
+    [SerializeField] private float cameraMoveTime = 2f;   // seconds per pan
+
+    [Header("Isometric Settings")]
+    [SerializeField] private float isoPitch    = 30f;
+    [SerializeField] private float isoYaw      = 45f;
+    [SerializeField] private float isoDistance = 30f;
 
     [Header("Tutorial UI")]
     [SerializeField] private GameObject tutorialPanel;
     [SerializeField] private Text tutorialText;
 
-    /// <summary>
-    /// Runs the tutorial sequence.  At the end of the tutorial we clean up any
-    /// temporary visual elements, record that the player has seen the tutorial,
-    /// and return control back to the player.
-    /// </summary>
-    public void ShowTutorial()
-    {
-        StartCoroutine(RunTutorial());
-    }
+    /* ─────────────────────────────── Runtime Helpers ─────────────────────────────── */
+    readonly List<GameObject> overlayObjects   = new();
+    readonly List<Behaviour>  disabledBehaviours = new();
 
+    /* ─────────────────────────────── Public Entry ─────────────────────────────── */
+    public void ShowTutorial() => StartCoroutine(RunTutorial());
+
+    /* ─────────────────────────────── Main Coroutine ─────────────────────────────── */
     IEnumerator RunTutorial()
     {
-        if (playerController != null)
-            playerController.enabled = false;
+        if (playerController) playerController.enabled = false;
 
-        Camera cam = tutorialCamera != null ? tutorialCamera : Camera.main;
-
-        yield return PanToTarget(cam, houseTarget, "This is your house.");
-        yield return PanToTarget(cam, workTarget, "This is where you work.");
-        yield return PanToTarget(cam, foodTarget, "Here you can get food.");
-
-        var hud = StatsHUD.Instance;
-        if (hud != null)
+        Camera cam = PrepareCamera();
+        if (!cam)
         {
-            var highlight = CreateHighlight(hud.MoneyTextTransform);
-            ShowDialogue("This shows how much money you have.");
-            yield return WaitForClick();
-            HideDialogue();
-            if (highlight != null) Destroy(highlight);
-
-            highlight = CreateHighlight(hud.HungerBarTransform);
-            ShowDialogue("This shows your hunger level.");
-            yield return WaitForClick();
-            HideDialogue();
-            if (highlight != null) Destroy(highlight);
-
-            highlight = CreateHighlight(hud.FatigueBarTransform);
-            ShowDialogue("This shows your fatigue level.");
-            yield return WaitForClick();
-            HideDialogue();
-            if (highlight != null) Destroy(highlight);
+            Debug.LogWarning("TutorialManager: No active camera found");
+            yield break;
         }
-        
+
+        /* Tour */
+        yield return PanAndExplain(houseTarget, "This is your house.");
+        yield return PanAndExplain(workTarget,  "This is where you work.");
+        yield return PanAndExplain(foodTarget,  "Here you can get food.");
+
+        /* HUD highlights */
+        yield return ShowHudHighlights();
+
+        /* Final message */
+        ShowDialogue("Have Fun!");
+        yield return WaitForClick();
+        HideDialogue();
 
         EndTutorial();
     }
 
-    IEnumerator PanToTarget(Camera cam, Transform target, string message)
+    /* ─────────────────────────────── Pan helpers ─────────────────────────────── */
+    IEnumerator PanAndExplain(Transform target, string message)
     {
-        if (cam == null || target == null)
-            yield break;
-
-        Vector3 startPos = cam.transform.position;
-        Quaternion startRot = cam.transform.rotation;
-        Vector3 endPos = target.position;
-        Quaternion endRot = target.rotation;
-        float t = 0f;
-        while (t < 1f)
-        {
-            if (cam == null)
-            {
-                cam = Camera.main;
-                if (cam == null)
-                    yield break;
-                startPos = cam.transform.position;
-                startRot = cam.transform.rotation;
-            }
-            t += Time.deltaTime / cameraMoveTime;
-            cam.transform.position = Vector3.Lerp(startPos, endPos, t);
-            cam.transform.rotation = Quaternion.Lerp(startRot, endRot, t);
-            yield return null;
-        }
-
+        yield return PanToTarget(target);
         ShowDialogue(message);
         yield return WaitForClick();
         HideDialogue();
     }
 
-    void ShowDialogue(string message)
+    IEnumerator PanToTarget(Transform target)
     {
-        if (tutorialText != null) tutorialText.text = message;
-        if (tutorialPanel != null) tutorialPanel.SetActive(true);
+        if (!target) yield break;
+
+        /* compute desired iso pose once */
+        Quaternion isoRot = Quaternion.Euler(isoPitch, isoYaw, 0f);
+        Vector3 desiredPos = target.position + isoRot * Vector3.back * isoDistance;
+        Quaternion desiredRot = Quaternion.LookRotation(target.position - desiredPos, Vector3.up);
+
+        float elapsed = 0f;
+        Camera activeCam = PrepareCamera();
+        if (!activeCam) yield break;
+
+        Vector3 startPos = activeCam.transform.position;
+        Quaternion startRot = activeCam.transform.rotation;
+
+        while (elapsed < cameraMoveTime)
+        {
+            /* handle camera destruction or replacement */
+            if (activeCam == null)
+            {
+                activeCam = PrepareCamera();
+                if (!activeCam) yield break;   // still missing – abort
+                // re‑anchor interpolation to new camera pose, keep elapsed progress
+                startPos = activeCam.transform.position;
+                startRot = activeCam.transform.rotation;
+            }
+
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / cameraMoveTime);
+
+            Vector3 newPos = Vector3.Lerp(startPos, desiredPos, t);
+            Quaternion newRot = Quaternion.Slerp(startRot, desiredRot, t);
+            activeCam.transform.SetPositionAndRotation(newPos, newRot);
+
+            yield return null;
+        }
+
+        if (activeCam)
+        {
+            activeCam.transform.SetPositionAndRotation(desiredPos, desiredRot);
+        }
     }
 
-    void HideDialogue()
+    /* ─────────────────────────────── HUD highlight ─────────────────────────────── */
+    IEnumerator ShowHudHighlights()
     {
-        if (tutorialPanel != null) tutorialPanel.SetActive(false);
+        var hud = StatsHUD.Instance;
+        if (!hud) yield break;
+
+        yield return HighlightWithDialogue(hud.MoneyTextTransform,  "This shows how much money you have.");
+        yield return HighlightWithDialogue(hud.HungerBarTransform, "This shows your hunger level.");
+        yield return HighlightWithDialogue(hud.FatigueBarTransform,"This shows your fatigue level.");
     }
+
+    IEnumerator HighlightWithDialogue(Transform target, string message)
+    {
+        var hl = CreateHighlight(target);
+        ShowDialogue(message);
+        yield return WaitForClick();
+        HideDialogue();
+        if (hl) Destroy(hl);
+    }
+
+    /* ─────────────────────────────── UI helpers ─────────────────────────────── */
+    void ShowDialogue(string msg)
+    {
+        if (tutorialText)  tutorialText.text = msg;
+        if (tutorialPanel) tutorialPanel.SetActive(true);
+    }
+    void HideDialogue() { if (tutorialPanel) tutorialPanel.SetActive(false); }
 
     IEnumerator WaitForClick()
     {
-        while (!Input.GetMouseButtonDown(0) && Input.touchCount == 0)
-            yield return null;
+        yield return new WaitUntil(() => Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began));
     }
 
-    public GameObject CreateHighlight(Transform target)
+    /* ─────────────────────────────── Overlay helpers ─────────────────────────────── */
+    GameObject CreateHighlight(Transform target)
     {
-        if (target == null) return null;
-
-        var overlay = new GameObject("TutorialHighlight", typeof(RectTransform), typeof(Image));
-        var rect = overlay.GetComponent<RectTransform>();
-        rect.SetParent(target, false);
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        overlay.transform.SetAsLastSibling();
-
-        var img = overlay.GetComponent<Image>();
+        if (!target) return null;
+        var go = new GameObject("TutorialHighlight", typeof(RectTransform), typeof(Image));
+        var rt = go.GetComponent<RectTransform>();
+        rt.SetParent(target, false);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        go.transform.SetAsLastSibling();
+        var img = go.GetComponent<Image>();
         img.color = new Color(1f, 1f, 1f, 0.25f);
         img.raycastTarget = false;
-
-        overlayObjects.Add(overlay);
-        return overlay;
+        overlayObjects.Add(go);
+        return go;
     }
-    void HighlightElement(RectTransform target)
+
+    /* ─────────────────────────────── Camera utilities ─────────────────────────────── */
+    Camera PrepareCamera()
     {
-        if (target == null) return;
+        Camera cam = tutorialCamera ? tutorialCamera : (Camera.main ? Camera.main : (GameObject.Find("Main Camera")?.GetComponent<Camera>()));
+        if (!cam) return null;
 
-        var overlay = new GameObject("Overlay", typeof(RectTransform), typeof(Image), typeof(Outline));
-        overlay.transform.SetParent(target, false);
-        var rect = overlay.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-
-        var img = overlay.GetComponent<Image>();
-        img.color = new Color(0, 0, 0, 0);
-        var outline = overlay.GetComponent<Outline>();
-        outline.effectColor = Color.yellow;
-        outline.effectDistance = new Vector2(5f, 5f);
-
-        overlayObjects.Add(overlay);
+        // disable any motion scripts once per camera instance
+        foreach (var b in cam.GetComponents<Behaviour>())
+        {
+            if (b != cam && b.enabled)
+            {
+                b.enabled = false;
+                disabledBehaviours.Add(b);
+            }
+        }
+        return cam;
     }
-    /// <summary>
-    /// Cleans up tutorial state and hands control back to the player.
-    /// </summary>
+
+    /* ─────────────────────────────── Cleanup ─────────────────────────────── */
     void EndTutorial()
     {
-        // Remove any highlights/overlays that were created for the tutorial
-        foreach (var overlay in overlayObjects)
-        {
-            if (overlay != null)
-            {
-                Destroy(overlay);
-            }
-        }
+        foreach (var o in overlayObjects) if (o) Destroy(o);
         overlayObjects.Clear();
 
-        // Re-enable any UI elements that were disabled for the tutorial
-        foreach (var ui in disabledUIElements)
-        {
-            if (ui != null)
-            {
-                ui.enabled = true;
-            }
-        }
-        disabledUIElements.Clear();
+        foreach (var beh in disabledBehaviours) if (beh) beh.enabled = true;
+        disabledBehaviours.Clear();
 
-        // Store that the tutorial has been seen so it doesn't run again
         PlayerPrefs.SetInt("TutorialSeen", 1);
         PlayerPrefs.Save();
 
-        // Hand control back to the player
-        if (playerController != null)
-        {
-            playerController.enabled = true;
-        }
-        // Camera remains in its current position; no explicit changes needed
+        if (playerController) playerController.enabled = true;
     }
+
+    /* ─────────────────────────────── Bootstrap helper ─────────────────────────────── */
     public static TutorialManager CreateIfNeeded()
     {
         if (Instance != null)
         {
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
-            {
-                Instance.ShowTutorial();
-            }
+            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) Instance.ShowTutorial();
             return Instance;
         }
 
         var existing = FindObjectOfType<TutorialManager>();
-        if (existing != null)
+        if (existing)
         {
             Instance = existing;
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
-            {
-                Instance.ShowTutorial();
-            }
-            return Instance;
+            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) existing.ShowTutorial();
+            return existing;
         }
+
         var prefab = Resources.Load<TutorialManager>("Prefabs/TutorialManager");
-        if (prefab != null)
+        if (prefab)
         {
-            var manager = Instantiate(prefab);
-            DontDestroyOnLoad(manager.gameObject);
-            Instance = manager;
-            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
-            {
-                manager.ShowTutorial();
-            }
-            return manager;
+            var mgr = Instantiate(prefab);
+            DontDestroyOnLoad(mgr.gameObject);
+            Instance = mgr;
+            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) mgr.ShowTutorial();
+            return mgr;
         }
+
         var go = new GameObject("TutorialManager");
         DontDestroyOnLoad(go);
-        var newManager = go.AddComponent<TutorialManager>();
-        Instance = newManager;
-        if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
-        {
-            newManager.ShowTutorial();
-        }
-        return newManager;
+        var newMgr = go.AddComponent<TutorialManager>();
+        Instance = newMgr;
+        if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0) newMgr.ShowTutorial();
+        return newMgr;
     }
 }

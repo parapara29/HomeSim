@@ -3033,6 +3033,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4134585187699935673, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4615571012134803136, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
       propertyPath: m_Name
       value: TutorialManager
