@@ -99,6 +99,7 @@ public class TutorialManager : MonoBehaviour
 
         Vector3 startPos = activeCam.transform.position;
         Quaternion startRot = activeCam.transform.rotation;
+        Debug.Log($"Panning from {startPos} to {desiredPos}  (target = {target.position})");
 
         while (elapsed < cameraMoveTime)
         {
@@ -112,7 +113,7 @@ public class TutorialManager : MonoBehaviour
                 startRot = activeCam.transform.rotation;
             }
 
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / cameraMoveTime);
 
             Vector3 newPos = Vector3.Lerp(startPos, desiredPos, t);

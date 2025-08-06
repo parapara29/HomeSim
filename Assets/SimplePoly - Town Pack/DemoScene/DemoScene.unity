@@ -1847,6 +1847,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b596eb5af66e89444beac675eae2c3a2, type: 3}
+--- !u!1 &64418699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 64418700}
+  m_Layer: 0
+  m_Name: WorkBuilding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &64418700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64418699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 67.9, y: 2.3, z: -29.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &65465519
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3084,15 +3115,15 @@ PrefabInstance:
     - target: {fileID: 7317276373100138578, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
       propertyPath: foodTarget
       value: 
-      objectReference: {fileID: 852938064}
+      objectReference: {fileID: 854280004}
     - target: {fileID: 7317276373100138578, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
       propertyPath: workTarget
       value: 
-      objectReference: {fileID: 563196752}
+      objectReference: {fileID: 64418700}
     - target: {fileID: 7317276373100138578, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
       propertyPath: houseTarget
       value: 
-      objectReference: {fileID: 1873713111}
+      objectReference: {fileID: 735897505}
     - target: {fileID: 7317276373100138578, guid: 071204a7e31afed42aabc65fcb766a26, type: 3}
       propertyPath: tutorialCamera
       value: 
@@ -12408,11 +12439,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 304596496}
   m_SourcePrefab: {fileID: 100100000, guid: 6a03abf06fc3f154abc371fa4e38f7d1, type: 3}
---- !u!4 &563196752 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 401954, guid: 6a03abf06fc3f154abc371fa4e38f7d1, type: 3}
-  m_PrefabInstance: {fileID: 563196751}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &564692975
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15000,6 +15026,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d9c2a6cb99ea45945b24d88f8b8e88ff, type: 3}
+--- !u!1 &735897504
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 735897505}
+  m_Layer: 0
+  m_Name: HouseBuilding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &735897505
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 735897504}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12.6, y: 3.8, z: 75.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &735961240
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18311,11 +18368,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 233318017}
   m_SourcePrefab: {fileID: 100100000, guid: 6f3f63053e017f4438955201b55656e0, type: 3}
---- !u!4 &852938064 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 493942, guid: 6f3f63053e017f4438955201b55656e0, type: 3}
-  m_PrefabInstance: {fileID: 852938063}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &853276609
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18365,6 +18417,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b596eb5af66e89444beac675eae2c3a2, type: 3}
+--- !u!1 &854280003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 854280004}
+  m_Layer: 0
+  m_Name: FoodBuilding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &854280004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854280003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 59.1, y: 0, z: 6.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &857124841 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6480984527315131808, guid: 3dbf3b9b34ea1fd4aaa5cc660a59587a, type: 3}
@@ -39151,11 +39234,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 857124845}
   m_SourcePrefab: {fileID: 100100000, guid: 3dbf3b9b34ea1fd4aaa5cc660a59587a, type: 3}
---- !u!4 &1873713111 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 195948944876094559, guid: 3dbf3b9b34ea1fd4aaa5cc660a59587a, type: 3}
-  m_PrefabInstance: {fileID: 1873713110}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1873925985
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -45116,3 +45194,6 @@ SceneRoots:
   - {fileID: 106972138}
   - {fileID: 1873713110}
   - {fileID: 1615529820}
+  - {fileID: 735897505}
+  - {fileID: 854280004}
+  - {fileID: 64418700}
