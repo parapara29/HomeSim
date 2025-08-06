@@ -210,14 +210,26 @@ public class TutorialManager : MonoBehaviour
             }
             return Instance;
         }
-
+        var prefab = Resources.Load<TutorialManager>("Prefabs/TutorialManager");
+        if (prefab != null)
+        {
+            var manager = Instantiate(prefab);
+            DontDestroyOnLoad(manager.gameObject);
+            Instance = manager;
+            if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
+            {
+                manager.ShowTutorial();
+            }
+            return manager;
+        }
         var go = new GameObject("TutorialManager");
         DontDestroyOnLoad(go);
-        var manager = go.AddComponent<TutorialManager>();
+        var newManager = go.AddComponent<TutorialManager>();
+        Instance = newManager;
         if (PlayerPrefs.GetInt("TutorialSeen", 0) == 0)
         {
-            manager.ShowTutorial();
+            newManager.ShowTutorial();
         }
-        return manager;
+        return newManager;
     }
 }
