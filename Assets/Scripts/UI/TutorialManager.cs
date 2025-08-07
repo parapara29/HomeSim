@@ -20,6 +20,11 @@ public class TutorialManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        if (PlayerPrefs.GetInt("TutorialSeen", 0) != 0)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
