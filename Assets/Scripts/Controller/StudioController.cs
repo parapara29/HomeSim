@@ -146,6 +146,17 @@ public class StudioController : MonoBehaviour
         }
 
         Transform panelTransform = canvas.transform.Find("StudioPanel");
+        // If the StudioPanel is not found under this canvas, attempt to locate it anywhere in the scene.
+        if (panelTransform == null)
+        {
+            var fallback = FindObjectOfType<StudioPanel>();
+            if (fallback != null)
+            {
+                panelTransform = fallback.transform;
+                // ensure the panel is parented under the canvas so UI positions work correctly
+                panelTransform.SetParent(canvas.transform, false);
+            }
+        }
         if (panelTransform == null)
         {
             Debug.LogError("StudioController.InitUI: StudioPanel not found");
@@ -444,14 +455,25 @@ public class StudioController : MonoBehaviour
         var stats = PlayerStats.Instance;
         if (stats != null)
         {
+            // During the tutorial, placing items should not deduct money. In normal gameplay,
+            // deduct the item's cost from the player's money.
+            bool tutorialActive = TutorialManager.Instance != null;
             int cost = 0;
-            if (currentItem != null) cost = currentItem.Cost;
-            if (stats.Money < cost)
+            if (!tutorialActive && currentItem != null)
+            {
+                cost = currentItem.Cost;
+            }
+            // If not enough money during normal gameplay, block placement
+            if (!tutorialActive && stats.Money < cost)
             {
                 Debug.LogWarning("Not enough money to buy this item");
                 return;
             }
-            stats.ChangeMoney(-cost);
+            // Only deduct money when not in tutorial mode
+            if (!tutorialActive && cost > 0)
+            {
+                stats.ChangeMoney(-cost);
+            }
         }
 
         room.PlaceItem(currentItem);

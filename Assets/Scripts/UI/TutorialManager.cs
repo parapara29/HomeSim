@@ -307,9 +307,10 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitUntil(() => GameObject.Find("StudioPanel") != null);
         var panel = GameObject.Find("StudioPanel")?.transform;
         if (panel == null) yield break;
-        // prevent furniture selection panel from closing while we guide the user
+        // Prevent the furniture selection panel from closing while we guide the user
         PanelCloseAllowed = false;
 
+        // Highlight and explain the reset button for camera view
         var reset = panel.Find("SetView/ResetButton");
         if (reset)
         {
@@ -317,44 +318,74 @@ public class TutorialManager : MonoBehaviour
             yield return HighlightWithDialogue(reset, "This is the Reset button. Tap it to reset the camera view.");
         }
 
+        // Locate various sub-views
         var itemButton = panel.Find("TypeView/ItemButton");
         var itemList = panel.Find("DragItemScrollView");
+        // Step 1: Show how to open the furniture list
         if (itemButton)
         {
-            // first, explain where to click to open the furniture list
             yield return HighlightWithDialogue(itemButton, "This is where you choose furniture.");
             if (itemList)
             {
                 // wait for the furniture list to be shown
                 yield return new WaitUntil(() => itemList.gameObject.activeInHierarchy);
-                // once the list is visible, highlight it and explain item costs
-                yield return HighlightWithDialogue(itemList, "Choose furniture from here according to your money. Each piece of furniture costs some money.");
+                // once visible, highlight the list and explain item costs
+                yield return HighlightWithDialogue(itemList,
+                    "Choose furniture from here according to your money. Each piece of furniture costs some money.");
             }
         }
 
+        // Step 2: Encourage the player to pick a bed
+        ShowDialogue("For now, choose a bed so you can rest in your house. Since this is the tutorial, the bed will be free.");
+        yield return WaitForClick();
+        HideDialogue();
+
+        // Step 3: Instruct the player to drag the selected item into the room
         var rotateButton = panel.Find("EditView/RotateButton");
         if (rotateButton)
         {
-            ShowDialogue("Select an item and drag it into the room.");
+            ShowDialogue("Drag the bed into the room to place it.");
+            // Wait until the rotate button becomes active, signalling that an item has been placed for editing
             yield return new WaitUntil(() => rotateButton.gameObject.activeInHierarchy);
             HideDialogue();
+            // Highlight the rotate button and explain its purpose
             yield return HighlightWithDialogue(rotateButton, "You can rotate the furniture using this.");
         }
 
+        // Step 4: Highlight the place button so the player knows how to confirm placement
+        var placeButton = panel.Find("EditView/PlaceButton");
+        if (placeButton)
+            yield return HighlightWithDialogue(placeButton, "Use this button to confirm placement of the furniture.");
+
+        // Step 5: Explain how to delete furniture
         var deleteButton = panel.Find("EditView/DeleteButton");
         if (deleteButton)
             yield return HighlightWithDialogue(deleteButton, "Use this to remove furniture.");
 
+        // Step 6: Explain the back button that exits edit mode
         var backButton = panel.Find("BackButton");
         if (backButton)
             yield return HighlightWithDialogue(backButton, "Exit edit mode with this button.");
-        // allow closing or backing out after edit mode is explained
+
+        // Wait until the player actually exits edit mode (i.e., rotate button is no longer visible)
+        var sp = panel.GetComponent<StudioPanel>();
+        if (sp != null)
+            yield return new WaitUntil(() => sp.GetMode() != StudioMode.EditItem);
+
+        // After leaving edit mode, tell the player to click the house again to exit
+        ShowDialogue("Click on the house again to exit.");
+        yield return WaitForClick();
+        HideDialogue();
+
+        // Allow closing or backing out after returning to normal mode
         PanelCloseAllowed = true;
+
+        // Finally, highlight the button that returns the player to the city
         var exitBtn = GameObject.Find("BackButtonMain")?.GetComponent<Button>();
         if (exitBtn)
         {
             var hl = CreateHighlight(exitBtn.transform);
-            ShowDialogue("Click here to return to the city.");
+            ShowDialogue("Use this button to return to the city view.");
             bool clicked = false;
             exitBtn.onClick.AddListener(() => clicked = true);
             while (!clicked) yield return null;
@@ -362,6 +393,7 @@ public class TutorialManager : MonoBehaviour
             if (hl) Destroy(hl);
         }
 
+        // Wait until we are back in the main city scene before continuing
         yield return new WaitUntil(() => SceneManager.GetActiveScene().name == "DemoScene");
         RebindLandmarks();
     }
@@ -481,15 +513,27 @@ public class TutorialManager : MonoBehaviour
         PlayerPrefs.SetInt("TutorialSeen", 1);
         PlayerPrefs.Save();
 
+        // re-enable controller if it was disabled
         if (playerController) playerController.enabled = true;
+
+        // Reset the static close flag so panels behave normally after the tutorial
+        PanelCloseAllowed = true;
+
+        // Destroy the tutorial UI panel and associated text to ensure no leftover UI remains
         if (tutorialPanel)
         {
             tutorialPanel.SetActive(false);
+            // also destroy the text object if it still exists
+            var textComp = tutorialText ? tutorialText.gameObject : null;
+            if (textComp) Destroy(textComp);
             Destroy(tutorialPanel);
             tutorialPanel = null;
+            tutorialText = null;
         }
 
+        // Stop any remaining tutorial coroutines
         StopAllCoroutines();
+        // Destroy this manager instance
         Destroy(gameObject);
     }
 
