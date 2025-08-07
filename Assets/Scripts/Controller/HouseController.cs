@@ -102,8 +102,13 @@ public class HouseController : MonoBehaviour
         housePanel.Hide();
         if (prefabName == "Room")
         {
-            var tut = TutorialManager.Instance;
-            if (tut) tut.StartCoroutine(tut.StartScene());
+            // Only run the in-room tutorial if the overall tutorial has not been completed yet.
+            bool tutorialSeen = PlayerPrefs.GetInt("TutorialSeen", 0) != 0;
+            if (!tutorialSeen)
+            {
+                var tut = TutorialManager.Instance;
+                if (tut) tut.StartCoroutine(tut.StartScene());
+            }
         }
     }
 

@@ -562,39 +562,64 @@ public class TutorialManager : MonoBehaviour
     public static TutorialManager CreateIfNeeded()
     {
         bool seen = PlayerPrefs.GetInt("TutorialSeen", 0) != 0;
+        // If the tutorial has been seen, avoid instantiating a new manager.
+        if (seen)
+        {
+            // If an instance already exists in the scene, destroy it completely.
+            if (Instance != null)
+            {
+                Object.Destroy(Instance.gameObject);
+                Instance = null;
+                return null;
+            }
+            var existingMgr = FindObjectOfType<TutorialManager>();
+            if (existingMgr)
+            {
+                // Destroy any lingering tutorial manager to fully clean up the DontDestroyOnLoad hierarchy
+                Object.Destroy(existingMgr.gameObject);
+                Instance = null;
+                return null;
+            }
+            // No manager needed if tutorial already completed
+            Instance = null;
+            return null;
+        }
+
+        // If there's already an instance, ensure it runs the tutorial when appropriate
         if (Instance != null)
         {
-            if (!seen) Instance.ShowTutorial();
-            else Instance.gameObject.SetActive(false);
+            Instance.gameObject.SetActive(true);
+            Instance.ShowTutorial();
             return Instance;
         }
 
+        // Check for an existing TutorialManager in the scene
         var existing = FindObjectOfType<TutorialManager>();
         if (existing)
         {
             Instance = existing;
-            if (!seen) existing.ShowTutorial();
-            else existing.gameObject.SetActive(false);
+            existing.gameObject.SetActive(true);
+            existing.ShowTutorial();
             return existing;
         }
 
+        // Load the prefab and instantiate a new tutorial manager
         var prefab = Resources.Load<TutorialManager>("Prefabs/TutorialManager");
         if (prefab)
         {
             var mgr = Instantiate(prefab);
             DontDestroyOnLoad(mgr.gameObject);
             Instance = mgr;
-            if (!seen) mgr.ShowTutorial();
-            else mgr.gameObject.SetActive(false);
+            mgr.ShowTutorial();
             return mgr;
         }
 
+        // As a fallback, create an empty tutorial manager
         var go = new GameObject("TutorialManager");
         DontDestroyOnLoad(go);
         var newMgr = go.AddComponent<TutorialManager>();
         Instance = newMgr;
-        if (!seen) newMgr.ShowTutorial();
-        else newMgr.gameObject.SetActive(false);
+        newMgr.ShowTutorial();
         return newMgr;
     }
 }

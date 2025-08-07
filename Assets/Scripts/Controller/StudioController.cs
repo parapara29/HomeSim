@@ -40,6 +40,9 @@ public class StudioController : MonoBehaviour
 
     private bool initialized = false;
 
+    // Tracks whether the item being placed is a newly added item (not an existing one).
+    private bool isNewItem = false;
+
     private void Start()
     {
         Initialize();
@@ -146,21 +149,30 @@ public class StudioController : MonoBehaviour
         }
 
         Transform panelTransform = canvas.transform.Find("StudioPanel");
-        // If the StudioPanel is not found under this canvas, attempt to locate it anywhere in the scene.
         if (panelTransform == null)
         {
-            var fallback = FindObjectOfType<StudioPanel>();
-            if (fallback != null)
+            // Attempt to find a StudioPanel elsewhere in the scene, excluding any under a TutorialManager
+            StudioPanel[] candidates = FindObjectsOfType<StudioPanel>();
+            foreach (var sp in candidates)
             {
-                panelTransform = fallback.transform;
-                // ensure the panel is parented under the canvas so UI positions work correctly
+                // Skip panels that are children of a TutorialManager or any DontDestroyOnLoad object
+                bool underTutorial = sp.transform.root.GetComponent<TutorialManager>() != null;
+                if (underTutorial)
+                    continue;
+                // Prefer panels that belong to the same canvas/root
+                panelTransform = sp.transform;
+                break;
+            }
+            if (panelTransform != null)
+            {
+                // Reparent to the canvas to ensure proper hierarchy
                 panelTransform.SetParent(canvas.transform, false);
             }
-        }
-        if (panelTransform == null)
-        {
-            Debug.LogError("StudioController.InitUI: StudioPanel not found");
-            return;
+            else
+            {
+                Debug.LogError("StudioController.InitUI: StudioPanel not found");
+                return;
+            }
         }
 
         studioPanel = panelTransform.GetComponent<StudioPanel>();
@@ -350,6 +362,10 @@ public class StudioController : MonoBehaviour
 {
     isItemEdited = false;
 
+        // When the editing session ends, reset the new-item flag so that
+        // existing items edited again aren't charged as new placements.
+        isNewItem = false;
+
     if (room      != null) room.RefreshGrids(false);
     if (gridGroup != null) gridGroup.SetActive(false);
 
@@ -387,6 +403,8 @@ public class StudioController : MonoBehaviour
         suspendItem.Init();
         suspendItem.OnClick = ClickItem;
 
+        // This is a brand new item being added from the UI, so mark it as new.
+        isNewItem = true;
         SetEdited(item);
 
         Direction dir = room.ShowWallsDirection()[0];
@@ -401,7 +419,9 @@ public class StudioController : MonoBehaviour
             PlaceItem();
         }
         if (isItemEdited) return;
+        // When editing an existing item, remove it from the room's grid but mark it as not new so placing it again doesn't cost money.
         room.DeleteItem(item);
+        isNewItem = false;
         SetEdited(item);
         SetCurrentItemPosition(room, currentItem, item.Item.Position);
         SetCurrentItemDirection(item, item.Item.Dir);
@@ -455,22 +475,22 @@ public class StudioController : MonoBehaviour
         var stats = PlayerStats.Instance;
         if (stats != null)
         {
-            // During the tutorial, placing items should not deduct money. In normal gameplay,
-            // deduct the item's cost from the player's money.
+            // During the tutorial, placing items should not deduct money at all. In normal
+            // gameplay, only deduct money for newly added items (not for editing existing ones).
             bool tutorialActive = TutorialManager.Instance != null;
             int cost = 0;
-            if (!tutorialActive && currentItem != null)
+            if (!tutorialActive && isNewItem && currentItem != null)
             {
                 cost = currentItem.Cost;
             }
-            // If not enough money during normal gameplay, block placement
-            if (!tutorialActive && stats.Money < cost)
+            // If not enough money during normal gameplay for a new item, block placement
+            if (!tutorialActive && isNewItem && stats.Money < cost)
             {
                 Debug.LogWarning("Not enough money to buy this item");
                 return;
             }
-            // Only deduct money when not in tutorial mode
-            if (!tutorialActive && cost > 0)
+            // Only deduct money when not in tutorial mode and the item is actually new
+            if (!tutorialActive && isNewItem && cost > 0)
             {
                 stats.ChangeMoney(-cost);
             }
