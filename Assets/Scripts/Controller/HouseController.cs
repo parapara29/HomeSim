@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 [DefaultExecutionOrder(-100)]
 public class HouseController : MonoBehaviour
@@ -24,7 +25,7 @@ public class HouseController : MonoBehaviour
     }
 
     /* --------------------------------------------------------------------- */
-    private void Start ()
+    private void Start()
     {
         /* 1. Spawn the house prefab */
         GameObject prefab = Resources.Load<GameObject>(housePrefabPath);
@@ -56,7 +57,7 @@ public class HouseController : MonoBehaviour
             return;
         }
 
-        housePanel  = canvas.transform.Find("HousePanel") ?.GetComponent<HousePanel>();
+        housePanel = canvas.transform.Find("HousePanel")?.GetComponent<HousePanel>();
         studioPanel = canvas.transform.Find("StudioPanel")?.gameObject;
 
         if (housePanel == null || studioPanel == null)
@@ -74,6 +75,9 @@ public class HouseController : MonoBehaviour
         };
 
         studioPanel.SetActive(false);          // hide Studio HUD until inside a room
+        var backButtonMain = GameObject.Find("BackButtonMain")?.GetComponent<Button>();
+        if (backButtonMain)
+            backButtonMain.onClick.AddListener(ReturnToCity);
     }
     /* --------------------------------------------------------------------- */
     /*  called by HouseDragRotate when player      *
@@ -85,7 +89,7 @@ public class HouseController : MonoBehaviour
     }
 
     /*  called by HousePanel when a button pressed */
-    private void OpenRoom (string prefabName)  // e.g. "Room" or "Bedroom"
+    private void OpenRoom(string prefabName)  // e.g. "Room" or "Bedroom"
     {
         if (house != null) Destroy(house);
 
@@ -96,7 +100,18 @@ public class HouseController : MonoBehaviour
 
         studioController?.OpenRoom(prefabName); // ← pass raw name ONLY
         housePanel.Hide();
+        if (prefabName == "Room")
+        {
+            var tut = TutorialManager.Instance;
+            if (tut) tut.StartCoroutine(tut.StartScene());
+        }
     }
+
+    public void ReturnToCity()
+    {
+        SceneManager.LoadScene("DemoScene");
+    }
+
 
     public void ReturnToHouse()
     {

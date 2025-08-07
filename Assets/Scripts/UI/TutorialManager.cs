@@ -66,7 +66,7 @@ public class TutorialManager : MonoBehaviour
     IEnumerator RunTutorial()
     {
         RebindLandmarks();                    // ensure tags resolved
-
+        string citySceneName = SceneManager.GetActiveScene().name;
         if (playerController) playerController.enabled = false;
 
         Camera cam = PrepareCamera();
@@ -80,6 +80,9 @@ public class TutorialManager : MonoBehaviour
         yield return PanAndExplain(houseTarget, "This is your house.");
         yield return WaitForBuildingClick();
         yield return ExplainHousePanel();
+        yield return WaitForScene("Start");
+        yield return ExplainStartScene();
+        yield return WaitForScene(citySceneName);
         yield return PanAndExplain(workTarget, "This is where you work.");
         yield return ExplainWorkPanel();
         yield return PanAndExplain(foodTarget, "Here you can get food.");
@@ -213,16 +216,29 @@ public class TutorialManager : MonoBehaviour
         var editButton = root.Find("EditButton");
         var restButton = root.Find("RestButton");
 
-        if (editButton)
-            yield return HighlightWithDialogue(editButton, "Edit furniture inside your house.");
         if (restButton)
             yield return HighlightWithDialogue(restButton, "Rest here to recover your energy.");
+        if (editButton)
+            yield return HighlightWithDialogue(editButton, "Edit furniture inside your house. Click on it to go to House View");
+            yield return new WaitUntil(() => SceneManager.GetActiveScene().name == "Start");
+
 
         ShowDialogue("Close the panel to continue.");
         yield return new WaitUntil(() => GameObject.Find("RestPanel") == null);
         HideDialogue();
     }
 
+    IEnumerator ExplainStartScene()
+    {
+        ShowDialogue("This is your house, click on it to get access to your rooms.");
+        yield return new WaitUntil(() => GameObject.Find("HousePanel") != null);
+        HideDialogue();
+
+        var panel = GameObject.Find("HousePanel");
+        var bedroom = panel ? panel.transform.Find("BedroomButton") : null;
+        if (bedroom)
+            yield return HighlightWithDialogue(bedroom, "Click here to enter your bedroom.");
+    }
     IEnumerator ShowStationPanel(
         string panelName,
         string clickMessage,
@@ -262,10 +278,69 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitUntil(() => (GameObject.Find(panelName) != null) == open);
     }
 
+    IEnumerator WaitForScene(string sceneName)
+    {
+        yield return new WaitUntil(() => SceneManager.GetActiveScene().name == sceneName);
+    }
+
     IEnumerator ExplainButton(string buttonName, string message)
     {
         var t = GameObject.Find(buttonName)?.transform;
         if (t) yield return HighlightWithDialogue(t, message);
+    }
+
+    public IEnumerator StartScene()
+    {
+        yield return new WaitUntil(() => GameObject.Find("StudioPanel") != null);
+        var panel = GameObject.Find("StudioPanel")?.transform;
+        if (panel == null) yield break;
+
+        var reset = panel.Find("SetView/ResetButton");
+        if (reset)
+        {
+            reset.gameObject.SetActive(true);
+            yield return HighlightWithDialogue(reset, "This is the Reset button. Tap it to reset the camera view.");
+        }
+
+        var itemButton = panel.Find("TypeView/ItemButton");
+        var itemList = panel.Find("DragItemScrollView");
+        if (itemButton)
+        {
+            yield return HighlightWithDialogue(itemButton, "This is where you choose furniture.");
+            if (itemList)
+                yield return new WaitUntil(() => itemList.gameObject.activeInHierarchy);
+        }
+
+        var rotateButton = panel.Find("EditView/RotateButton");
+        if (rotateButton)
+        {
+            ShowDialogue("Select an item and drag it into the room.");
+            yield return new WaitUntil(() => rotateButton.gameObject.activeInHierarchy);
+            HideDialogue();
+            yield return HighlightWithDialogue(rotateButton, "You can rotate the furniture using this.");
+        }
+
+        var deleteButton = panel.Find("EditView/DeleteButton");
+        if (deleteButton)
+            yield return HighlightWithDialogue(deleteButton, "Use this to remove furniture.");
+
+        var backButton = panel.Find("BackButton");
+        if (backButton)
+            yield return HighlightWithDialogue(backButton, "Exit edit mode with this button.");
+        var exitBtn = GameObject.Find("BackButtonMain")?.GetComponent<Button>();
+        if (exitBtn)
+        {
+            var hl = CreateHighlight(exitBtn.transform);
+            ShowDialogue("Click here to return to the city.");
+            bool clicked = false;
+            exitBtn.onClick.AddListener(() => clicked = true);
+            while (!clicked) yield return null;
+            HideDialogue();
+            if (hl) Destroy(hl);
+        }
+
+        yield return new WaitUntil(() => SceneManager.GetActiveScene().name == "DemoScene");
+        RebindLandmarks();
     }
     /* ─────────────────────────────── HUD highlight ─────────────────────────────── */
     IEnumerator ShowHudHighlights()
