@@ -149,6 +149,9 @@ public class FoodMenu : MonoBehaviour
 
     void ClosePanel()
     {
+        // In tutorial mode, disallow closing this panel until allowed by TutorialManager.
+        if (TutorialManager.Instance != null && !TutorialManager.PanelCloseAllowed)
+            return;
         if (panel != null)
         {
             Destroy(panel);

@@ -9,6 +9,10 @@ public class TutorialManager : MonoBehaviour
 {
     /* ───────────────────────────────────── Singleton ───────────────────────────────────── */
     public static TutorialManager Instance { get; private set; }
+    // Controls whether external panels (work/food/furniture) can be closed by clicking outside.
+    // When set to false, UI scripts should not destroy their panels until the tutorial
+    // explicitly allows it. Defaults to true when no tutorial is running.
+    public static bool PanelCloseAllowed { get; set; } = true;
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -86,7 +90,10 @@ public class TutorialManager : MonoBehaviour
         yield return PanAndExplain(workTarget, "This is where you work.");
         yield return ExplainWorkPanel();
         yield return PanAndExplain(foodTarget, "Here you can get food.");
+        // Keep the food menu open once it appears until explicitly allowed to close.
         ShowDialogue("Click the food building to open the food menu.");
+        // disallow closing the food panel until we instruct otherwise
+        PanelCloseAllowed = false;
         yield return WaitForPanel("FoodPanel", true);
         HideDialogue();
 
@@ -99,7 +106,9 @@ public class TutorialManager : MonoBehaviour
             "Burgers are cheaper at 40 coins but only restore a little hunger."
         );
 
+        // allow the player to close the food menu now
         ShowDialogue("Close the food menu to continue.");
+        PanelCloseAllowed = true;
         yield return WaitForPanel("FoodPanel", false);
         HideDialogue();
 
@@ -248,6 +257,8 @@ public class TutorialManager : MonoBehaviour
         string confirmMessage)
     {
         ShowDialogue(clickMessage);
+        // prevent the station panel from closing prematurely
+        PanelCloseAllowed = false;
         yield return new WaitUntil(() => GameObject.Find(panelName) != null);
         HideDialogue();
 
@@ -258,6 +269,8 @@ public class TutorialManager : MonoBehaviour
         var confirm = panel ? panel.transform.Find(confirmPath) : null;
         if (confirm) yield return HighlightWithDialogue(confirm, confirmMessage);
 
+        // allow the player to close the station panel now
+        PanelCloseAllowed = true;
         yield return new WaitUntil(() => GameObject.Find(panelName) == null);
     }
 
@@ -294,6 +307,8 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitUntil(() => GameObject.Find("StudioPanel") != null);
         var panel = GameObject.Find("StudioPanel")?.transform;
         if (panel == null) yield break;
+        // prevent furniture selection panel from closing while we guide the user
+        PanelCloseAllowed = false;
 
         var reset = panel.Find("SetView/ResetButton");
         if (reset)
@@ -306,9 +321,15 @@ public class TutorialManager : MonoBehaviour
         var itemList = panel.Find("DragItemScrollView");
         if (itemButton)
         {
+            // first, explain where to click to open the furniture list
             yield return HighlightWithDialogue(itemButton, "This is where you choose furniture.");
             if (itemList)
+            {
+                // wait for the furniture list to be shown
                 yield return new WaitUntil(() => itemList.gameObject.activeInHierarchy);
+                // once the list is visible, highlight it and explain item costs
+                yield return HighlightWithDialogue(itemList, "Choose furniture from here according to your money. Each piece of furniture costs some money.");
+            }
         }
 
         var rotateButton = panel.Find("EditView/RotateButton");
@@ -327,6 +348,8 @@ public class TutorialManager : MonoBehaviour
         var backButton = panel.Find("BackButton");
         if (backButton)
             yield return HighlightWithDialogue(backButton, "Exit edit mode with this button.");
+        // allow closing or backing out after edit mode is explained
+        PanelCloseAllowed = true;
         var exitBtn = GameObject.Find("BackButtonMain")?.GetComponent<Button>();
         if (exitBtn)
         {

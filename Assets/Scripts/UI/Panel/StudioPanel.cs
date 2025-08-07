@@ -250,7 +250,12 @@ public class StudioPanel : MonoBehaviour
         }
         if (!clickedItem)
         {
-            Back();
+            // If a tutorial is running and closing panels is disallowed, do not automatically
+            // exit the item selection. Otherwise, go back to the previous view.
+            if (TutorialManager.Instance == null || TutorialManager.PanelCloseAllowed)
+            {
+                Back();
+            }
         }
     }
 
