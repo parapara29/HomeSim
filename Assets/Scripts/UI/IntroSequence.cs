@@ -43,6 +43,7 @@ public class IntroSequence : MonoBehaviour
     {
         if (hasSeenIntro)
         {
+            SceneManager.sceneLoaded += OnDemoSceneLoaded;
             SceneManager.LoadScene("DemoScene");
             return;
         }
