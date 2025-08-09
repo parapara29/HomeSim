@@ -531,15 +531,6 @@ public class StudioController : MonoBehaviour
         if (currentItem != null)
         {
             room.PlaceItem(currentItem);
-
-            // Immediately persist the room state after placing an item. Previously we
-            // deferred saving until leaving the room, which caused a bug where
-            // only the first placed furniture item was persisted. By calling
-            // SaveRoomState here, every new placement (including those on
-            // surfaces) will be recorded in PlayerPrefs. This ensures that
-            // subsequent purchases are saved correctly without requiring the
-            // player to exit the room first.
-            SaveRoomState();
         }
 
         // after
@@ -555,10 +546,6 @@ public class StudioController : MonoBehaviour
         SuspendItem suspendItem = currentItem.gameObject.GetComponent<SuspendItem>();
         suspendItem.enabled = true;
 
-        // Persist the room state again after finishing the placement to ensure
-        // any last‑moment adjustments (such as parenting) are captured.
-        SaveRoomState();
-
         ResetState();
         studioPanel.Back();
     }
@@ -567,10 +554,6 @@ public class StudioController : MonoBehaviour
     {
         if (!isItemEdited) return;
         Destroy(currentItem.gameObject);
-        // After deleting an item, persist the state so that the removal
-        // is reflected in the saved data. Without saving here, deleted
-        // furniture could reappear when the room is reloaded.
-        SaveRoomState();
 
         ResetState();
         studioPanel.Back();
