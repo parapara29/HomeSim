@@ -249,6 +249,17 @@ public class WorkStation : MonoBehaviour
             float normalized = hours / 12f;
             stats.SetHunger(Mathf.Clamp01(stats.Hunger - normalized));
             stats.SetFatigue(Mathf.Clamp01(stats.Fatigue + normalized));
+
+            // If the player works excessive hours (over 8), they risk raising
+            // suspicion. Working long hours without proper rest is unusual for a
+            // human and will increment the suspicion meter. The added suspicion
+            // scales with how many extra hours were worked beyond 8.
+            if (stats.Suspicion < 1f && hours > 8)
+            {
+                // Normalise the extra hours into a small suspicion increase
+                float extra = Mathf.Clamp(hours - 8, 0, 4) / 4f; // 0–1 over 4 hrs
+                stats.ChangeSuspicion(0.05f * extra);
+            }
             StatsHUD.Instance?.UpdateUI();
         }
 

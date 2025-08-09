@@ -12,11 +12,14 @@ public class StatsHUD : MonoBehaviour
     Text  moneyText;
     Image hungerBar;
     Image fatigueBar;
+    Image suspicionBar;
     public Transform MoneyTextTransform  { get; private set; }
     public Transform HungerBarTransform  { get; private set; }
     public Transform FatigueBarTransform { get; private set; }
+    public Transform SuspicionBarTransform { get; private set; }
     float hungerBarMaxWidth;
     float fatigueBarMaxWidth;
+    float suspicionBarMaxWidth;
     UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
 
     /* ───────────────────────── LIFECYCLE ───────────────────────── */
@@ -54,7 +57,8 @@ public class StatsHUD : MonoBehaviour
         rect.anchorMax       = new Vector2(0, 1);
         rect.pivot           = new Vector2(0, 1);
         rect.anchoredPosition = startPosition;
-        rect.sizeDelta       = new Vector2(160, 60);
+        // expand height to accommodate the new suspicion bar
+        rect.sizeDelta       = new Vector2(160, 80);
 
         /* background */
         var bg = new GameObject("Background", typeof(RectTransform), typeof(Image));
@@ -73,6 +77,9 @@ public class StatsHUD : MonoBehaviour
         HungerBarTransform = hungerTransform;
         fatigueBar = CreateBar  ("FatigueBar", new Vector2(0, -45), Color.cyan, out fatigueBarMaxWidth, out var fatigueTransform);
         FatigueBarTransform = fatigueTransform;
+        // suspicion bar below fatigue bar, tinted magenta/red for visibility
+        suspicionBar = CreateBar("SuspicionBar", new Vector2(0, -65), new Color(1f, 0.2f, 0.2f), out suspicionBarMaxWidth, out var suspicionTransform);
+        SuspicionBarTransform = suspicionTransform;
     }
 
     Text CreateText(string name, Vector2 pos)
@@ -191,6 +198,11 @@ public class StatsHUD : MonoBehaviour
             {
             float w = fatigueBarMaxWidth * Mathf.Clamp01(s.Fatigue);
             fatigueBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+        }
+        if (suspicionBar != null)
+        {
+            float w = suspicionBarMaxWidth * Mathf.Clamp01(s.Suspicion);
+            suspicionBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
         }
     }
 

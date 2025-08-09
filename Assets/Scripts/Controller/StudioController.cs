@@ -493,6 +493,13 @@ public class StudioController : MonoBehaviour
             if (!tutorialActive && isNewItem && cost > 0)
             {
                 stats.ChangeMoney(-cost);
+
+                // Suspicious purchases: extremely expensive furniture is unusual. If a player
+                // buys an item that costs more than 500 coins, raise suspicion slightly.
+                if (cost > 500)
+                {
+                    stats.ChangeSuspicion(0.1f);
+                }
             }
         }
 

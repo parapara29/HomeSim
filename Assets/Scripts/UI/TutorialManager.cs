@@ -15,12 +15,16 @@ public class TutorialManager : MonoBehaviour
     public static bool PanelCloseAllowed { get; set; } = true;
     void Awake()
     {
-        if (Instance != null && Instance != this)
+        // If the tutorial has already been completed, destroy any TutorialManager
+        // instances that may have been included in scenes to prevent them persisting.
+        bool seen = PlayerPrefs.GetInt("TutorialSeen", 0) != 0;
+        if (seen)
         {
             Destroy(gameObject);
             return;
         }
-        if (PlayerPrefs.GetInt("TutorialSeen", 0) != 0)
+
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -428,6 +432,17 @@ public class TutorialManager : MonoBehaviour
             hud.FatigueBarTransform,
             "Fatigue rises as you work and drops again when you rest."
         );
+
+        // ④ Suspicion
+        // Wait for the suspicion bar to be created on the HUD
+        yield return new WaitUntil(() => hud.SuspicionBarTransform != null);
+        // Explain to the player what the suspicion meter is and why it matters
+        yield return HighlightWithDialogue(
+            hud.SuspicionBarTransform,
+            "The suspicion meter shows how 'alien' your behaviour seems.\n" +
+            "Performing actions like overworking, staying perfectly clean without showering, or purchasing unusual items will raise suspicion.\n" +
+            "Keep this bar low to avoid drawing attention."
+        );
     }
 
     IEnumerator HighlightWithDialogue(Transform target, string message)
@@ -570,22 +585,26 @@ public class TutorialManager : MonoBehaviour
         // If the tutorial has been seen, avoid instantiating a new manager.
         if (seen)
         {
-            // If an instance already exists in the scene, destroy it completely.
-            if (Instance != null)
+            /*
+             * If the tutorial has already been completed, we must ensure there are no
+             * lingering TutorialManager instances anywhere in the scene or in the
+             * DontDestroyOnLoad hierarchy. Previously we only destroyed a single instance
+             * which could leave behind additional copies (for example, if both the
+             * DemoScene and the Start scene contained a TutorialManager prefab). Use
+             * FindObjectsOfType with includeInactive = true to locate every manager and
+             * destroy them all. Once removed, ensure the static Instance reference is
+             * cleared. This prevents TutorialManager.Instance from returning a leftover
+             * object in subsequent checks (e.g. StudioController determining tutorial
+             * active state).
+             */
+            var managers = Object.FindObjectsOfType<TutorialManager>(true);
+            foreach (var mgr in managers)
             {
-                Object.Destroy(Instance.gameObject);
-                Instance = null;
-                return null;
+                if (mgr != null)
+                {
+                    Object.Destroy(mgr.gameObject);
+                }
             }
-            var existingMgr = FindObjectOfType<TutorialManager>();
-            if (existingMgr)
-            {
-                // Destroy any lingering tutorial manager to fully clean up the DontDestroyOnLoad hierarchy
-                Object.Destroy(existingMgr.gameObject);
-                Instance = null;
-                return null;
-            }
-            // No manager needed if tutorial already completed
             Instance = null;
             return null;
         }
