@@ -345,7 +345,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         // Step 2: Encourage the player to pick a bed
-        ShowDialogue("For now, choose a bed so you can rest in your house. Since this is the tutorial, the bed will be free.");
+        ShowDialogue("For integration with the human society, you need to look the part, search for the Capsule in the furniture list and place it in your room. Worry not, since this is the first time, you wont be charged.");
         yield return WaitForClick();
         HideDialogue();
 

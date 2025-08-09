@@ -20,6 +20,11 @@ public class StatsHUD : MonoBehaviour
     float hungerBarMaxWidth;
     float fatigueBarMaxWidth;
     float suspicionBarMaxWidth;
+
+    // A button to open Agent Miller's suspicion log
+    Button logButton;
+    // Panel that displays the suspicion log; created lazily
+    GameObject logPanel;
     UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
 
     /* ───────────────────────── LIFECYCLE ───────────────────────── */
@@ -80,6 +85,35 @@ public class StatsHUD : MonoBehaviour
         // suspicion bar below fatigue bar, tinted magenta/red for visibility
         suspicionBar = CreateBar("SuspicionBar", new Vector2(0, -65), new Color(1f, 0.2f, 0.2f), out suspicionBarMaxWidth, out var suspicionTransform);
         SuspicionBarTransform = suspicionTransform;
+
+        // Agent log button below the suspicion bar
+        var logBtnGO = new GameObject("LogButton", typeof(RectTransform), typeof(Image), typeof(Button));
+        logBtnGO.transform.SetParent(transform, false);
+        var logRect = logBtnGO.GetComponent<RectTransform>();
+        logRect.anchorMin = new Vector2(0, 1);
+        logRect.anchorMax = new Vector2(0, 1);
+        logRect.pivot     = new Vector2(0, 1);
+        // Position it below the suspicion bar with some padding
+        logRect.anchoredPosition = new Vector2(0, -80);
+        logRect.sizeDelta        = new Vector2(GetComponent<RectTransform>().rect.width, 18);
+        var logImg = logBtnGO.GetComponent<Image>();
+        logImg.color = new Color(0.2f, 0.2f, 0.4f, 0.8f);
+        var logButtonComponent = logBtnGO.GetComponent<Button>();
+        // Create text child for the button
+        var logTxtGO = new GameObject("Text", typeof(RectTransform), typeof(Text));
+        logTxtGO.transform.SetParent(logBtnGO.transform, false);
+        var logTxtRect = logTxtGO.GetComponent<RectTransform>();
+        logTxtRect.anchorMin = Vector2.zero;
+        logTxtRect.anchorMax = Vector2.one;
+        logTxtRect.offsetMin = logTxtRect.offsetMax = Vector2.zero;
+        var logTxt = logTxtGO.GetComponent<Text>();
+        logTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        logTxt.text = "Agent Log";
+        logTxt.color = Color.white;
+        logTxt.alignment = TextAnchor.MiddleCenter;
+        // Assign click handler
+        logButtonComponent.onClick.AddListener(ToggleLogPanel);
+        logButton = logBtnGO.GetComponent<Button>();
     }
 
     Text CreateText(string name, Vector2 pos)
@@ -212,6 +246,101 @@ public class StatsHUD : MonoBehaviour
     {
         var r = GetComponent<RectTransform>();
         if (r) r.anchoredPosition = pos;
+    }
+
+    /// <summary>
+    /// Toggles the Agent Miller log panel. If the panel is currently open it
+    /// will be closed, otherwise it will be created and populated with the
+    /// current suspicion log entries.
+    /// </summary>
+    private void ToggleLogPanel()
+    {
+        if (logPanel != null)
+        {
+            Destroy(logPanel);
+            logPanel = null;
+            return;
+        }
+        CreateLogPanel();
+    }
+
+    /// <summary>
+    /// Creates a floating panel displaying all logged suspicious activities.
+    /// The panel is a child of the HUD canvas and contains scrollable text
+    /// for ease of reading. Includes a close button to dismiss the panel.
+    /// </summary>
+    private void CreateLogPanel()
+    {
+        // find or create an overlay canvas (reuse HUD's canvas)
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = Object.FindObjectOfType<Canvas>();
+        }
+        logPanel = new GameObject("AgentLogPanel", typeof(RectTransform), typeof(Image));
+        logPanel.transform.SetParent(canvas.transform, false);
+        var rect = logPanel.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot     = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(300, 200);
+        logPanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+        // scroll view root
+        var scrollGO = new GameObject("ScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+        scrollGO.transform.SetParent(logPanel.transform, false);
+        var scrollRect = scrollGO.GetComponent<RectTransform>();
+        scrollRect.anchorMin = new Vector2(0.05f, 0.15f);
+        scrollRect.anchorMax = new Vector2(0.95f, 0.95f);
+        scrollRect.offsetMin = scrollRect.offsetMax = Vector2.zero;
+        scrollGO.GetComponent<Image>().color = new Color(0, 0, 0, 0.2f);
+        var scroll = scrollGO.GetComponent<ScrollRect>();
+        scroll.horizontal = false;
+        // content container
+        var contentGO = new GameObject("Content", typeof(RectTransform), typeof(Text));
+        contentGO.transform.SetParent(scrollGO.transform, false);
+        var contentRect = contentGO.GetComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0, 1);
+        contentRect.anchorMax = new Vector2(1, 1);
+        contentRect.pivot     = new Vector2(0.5f, 1f);
+        contentRect.anchoredPosition = Vector2.zero;
+        contentRect.sizeDelta = new Vector2(0, 0);
+        var contentText = contentGO.GetComponent<Text>();
+        contentText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        contentText.alignment = TextAnchor.UpperLeft;
+        contentText.color = Color.white;
+        contentText.text = SuspicionLogger.GetLogText();
+        contentText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        contentText.verticalOverflow   = VerticalWrapMode.Overflow;
+        scroll.content = contentRect;
+        // update content height based on number of lines
+        Canvas.ForceUpdateCanvases();
+        float height = contentText.preferredHeight;
+        contentRect.sizeDelta = new Vector2(0, height);
+        scroll.viewport = scrollRect;
+        // close button
+        var closeBtnGO = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+        closeBtnGO.transform.SetParent(logPanel.transform, false);
+        var closeRect = closeBtnGO.GetComponent<RectTransform>();
+        closeRect.anchorMin = new Vector2(0.8f, 0.02f);
+        closeRect.anchorMax = new Vector2(0.95f, 0.12f);
+        closeRect.offsetMin = closeRect.offsetMax = Vector2.zero;
+        closeBtnGO.GetComponent<Image>().color = new Color(0.8f, 0.2f, 0.2f, 0.9f);
+        var closeTxtGO = new GameObject("Text", typeof(RectTransform), typeof(Text));
+        closeTxtGO.transform.SetParent(closeBtnGO.transform, false);
+        var closeTxtRect = closeTxtGO.GetComponent<RectTransform>();
+        closeTxtRect.anchorMin = Vector2.zero;
+        closeTxtRect.anchorMax = Vector2.one;
+        closeTxtRect.offsetMin = closeTxtRect.offsetMax = Vector2.zero;
+        var closeTxt = closeTxtGO.GetComponent<Text>();
+        closeTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        closeTxt.text = "Close";
+        closeTxt.color = Color.white;
+        closeTxt.alignment = TextAnchor.MiddleCenter;
+        closeBtnGO.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            Destroy(logPanel);
+            logPanel = null;
+        });
     }
 
     public static StatsHUD CreateIfNeeded(Vector2? pos = null)

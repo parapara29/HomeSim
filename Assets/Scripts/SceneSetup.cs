@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [DefaultExecutionOrder(-1000)]   // run before everyone else
 public class SceneSetup : MonoBehaviour
@@ -17,6 +18,14 @@ public class SceneSetup : MonoBehaviour
 
         // ───────── HUD & Player Stats ─────────
         PlayerStats.CreateIfNeeded();
+
+        // ───────── Day Manager ─────────
+        // Ensure the DayManager exists and run a new‑day check. This will
+        // process any days that have passed since the last session and apply
+        // suspicion penalties for missing furniture or poor hygiene.
+        var dayMgr = DayManager.CreateIfNeeded();
+        if (dayMgr != null)
+            dayMgr.CheckForNewDay();
 
         // ───────── Tutorial cleanup ─────────
         // If the tutorial has been completed, proactively remove any leftover

@@ -13,12 +13,20 @@ public class WorkStation : MonoBehaviour
     void OnMouseUpAsButton()        // taps also reach here on Android
     {
         if (panel == null)
-            {
+        {
             var stats = PlayerStats.Instance;
-            if (stats != null &&  stats.Fatigue >= 1f)
+            if (stats != null && stats.Fatigue >= 1f)
+            {
+                // The player attempted to work while completely exhausted. A human
+                // cannot work when at maximum fatigue, so raise suspicion and log it.
+                stats.ChangeSuspicion(0.1f);
+                SuspicionLogger.Add("Subject attempted to work despite extreme fatigue. Superhuman behaviour detected.");
                 BuildRestPopup();
+            }
             else
+            {
                 BuildPanel();
+            }
         }
     }
 
@@ -256,9 +264,12 @@ public class WorkStation : MonoBehaviour
             // scales with how many extra hours were worked beyond 8.
             if (stats.Suspicion < 1f && hours > 8)
             {
-                // Normalise the extra hours into a small suspicion increase
+                // Normalise the extra hours into a small suspicion increase. Working
+                // more than eight hours without rest is unusual for a human.
                 float extra = Mathf.Clamp(hours - 8, 0, 4) / 4f; // 0–1 over 4 hrs
-                stats.ChangeSuspicion(0.05f * extra);
+                float delta = 0.05f * extra;
+                stats.ChangeSuspicion(delta);
+                SuspicionLogger.Add($"Subject worked an extra {hours - 8} hours beyond normal. Suspicion increased.");
             }
             StatsHUD.Instance?.UpdateUI();
         }
