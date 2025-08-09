@@ -28,6 +28,13 @@ public class GameClock : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        // Load persisted time from PlayerPrefs if present. Use sensible
+        // defaults of 6:00 on day 1 when first starting the game. We use
+        // separate keys for the hour (float) and day (int). The keys
+        // "GameClock.CurrentHour" and "GameClock.CurrentDay" are namespaced
+        // to avoid collisions with other preferences.
+        currentHour = PlayerPrefs.GetFloat("GameClock.CurrentHour", 6f);
+        currentDay  = PlayerPrefs.GetInt("GameClock.CurrentDay", 1);
     }
 
     /// <summary>
@@ -108,5 +115,17 @@ public class GameClock : MonoBehaviour
     public int GetCurrentHour()
     {
         return Mathf.FloorToInt(currentHour) % 24;
+    }
+
+    void OnDestroy()
+    {
+        // Persist the current in-game time and day when the clock is
+        // destroyed (e.g. when exiting the application). Saving here
+        // ensures that time resumes from the last point when the game
+        // is reloaded. Unity calls OnDestroy on objects marked as
+        // DontDestroyOnLoad when the application quits.
+        PlayerPrefs.SetFloat("GameClock.CurrentHour", currentHour);
+        PlayerPrefs.SetInt("GameClock.CurrentDay", currentDay);
+        PlayerPrefs.Save();
     }
 }

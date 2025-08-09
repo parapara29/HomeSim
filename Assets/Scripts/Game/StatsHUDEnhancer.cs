@@ -106,35 +106,46 @@ public class StatsHUDEnhancer : MonoBehaviour
         if (logBtn != null)
         {
             var rect = logBtn.GetComponent<RectTransform>();
-            rect.anchoredPosition = new Vector2(0f, -120f);
+            // Offset further down to accommodate taller bars
+            rect.anchoredPosition = new Vector2(0f, -135f);
         }
 
-        // Create our custom time display as a button anchored to the top centre
-        var timeGO = new GameObject("GameTimeDisplay", typeof(RectTransform), typeof(Image), typeof(Button));
-        timeGO.transform.SetParent(hud.transform, false);
-        var timeRect = timeGO.GetComponent<RectTransform>();
-        timeRect.anchorMin = new Vector2(0.5f, 1f);
-        timeRect.anchorMax = new Vector2(0.5f, 1f);
-        timeRect.pivot     = new Vector2(0.5f, 1f);
-        timeRect.anchoredPosition = new Vector2(0f, -5f);
-        timeRect.sizeDelta = new Vector2(hudRect.rect.width, 28f);
-        var timeImg = timeGO.GetComponent<Image>();
-        timeImg.color = new Color(0f, 0f, 0f, 0f);
-        var btn = timeGO.GetComponent<Button>();
-        btn.onClick.AddListener(ToggleDayPanel);
-        // Create child text for time
-        var txtGO = new GameObject("Text", typeof(RectTransform), typeof(Text));
-        txtGO.transform.SetParent(timeGO.transform, false);
-        var txtRect = txtGO.GetComponent<RectTransform>();
-        txtRect.anchorMin = Vector2.zero;
-        txtRect.anchorMax = Vector2.one;
-        txtRect.offsetMin = txtRect.offsetMax = Vector2.zero;
-        customTimeText = txtGO.GetComponent<Text>();
-        customTimeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        customTimeText.fontSize = 18;
-        customTimeText.alignment = TextAnchor.MiddleCenter;
-        customTimeText.color = Color.white;
-        customTimeText.text = string.Empty;
+        // Create our custom time display outside the HUD on the root canvas. The
+        // clock is anchored to the top centre of the screen, sized to span
+        // the width of the canvas, and slightly larger than the original.
+        var canvas = hud.GetComponentInParent<Canvas>();
+        if (canvas == null) canvas = Object.FindObjectOfType<Canvas>();
+        if (canvas != null)
+        {
+            var timeGO = new GameObject("GameTimeDisplay", typeof(RectTransform), typeof(Image), typeof(Button));
+            timeGO.transform.SetParent(canvas.transform, false);
+            var timeRect = timeGO.GetComponent<RectTransform>();
+            timeRect.anchorMin = new Vector2(0.5f, 1f);
+            timeRect.anchorMax = new Vector2(0.5f, 1f);
+            timeRect.pivot     = new Vector2(0.5f, 1f);
+            // Place slightly below the top edge
+            timeRect.anchoredPosition = new Vector2(0f, -5f);
+            // Span the full width of the canvas and allocate more height for larger font
+            var canvasRect = canvas.GetComponent<RectTransform>();
+            timeRect.sizeDelta = new Vector2(canvasRect.rect.width, 36f);
+            var timeImg = timeGO.GetComponent<Image>();
+            timeImg.color = new Color(0f, 0f, 0f, 0f);
+            var btn = timeGO.GetComponent<Button>();
+            btn.onClick.AddListener(ToggleDayPanel);
+            // Create child text for time
+            var txtGO = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            txtGO.transform.SetParent(timeGO.transform, false);
+            var txtRect = txtGO.GetComponent<RectTransform>();
+            txtRect.anchorMin = Vector2.zero;
+            txtRect.anchorMax = Vector2.one;
+            txtRect.offsetMin = txtRect.offsetMax = Vector2.zero;
+            customTimeText = txtGO.GetComponent<Text>();
+            customTimeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            customTimeText.fontSize = 24;
+            customTimeText.alignment = TextAnchor.MiddleCenter;
+            customTimeText.color = Color.white;
+            customTimeText.text = string.Empty;
+        }
     }
 
     /// <summary>
@@ -147,7 +158,8 @@ public class StatsHUDEnhancer : MonoBehaviour
         var rt = t.GetComponent<RectTransform>();
         if (rt != null)
         {
-            rt.sizeDelta = new Vector2(rt.sizeDelta.x, 20f);
+            // Increase the height of each bar to make status bars more prominent
+            rt.sizeDelta = new Vector2(rt.sizeDelta.x, 25f);
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, yPosition);
         }
     }

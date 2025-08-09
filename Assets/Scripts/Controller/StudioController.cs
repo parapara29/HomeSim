@@ -40,6 +40,11 @@ public class StudioController : MonoBehaviour
 
     private bool initialized = false;
 
+    // Tracks the surface on which the current item will be placed when
+    // PlaceType is Item. This allows the item to be parented to the
+    // surface after placement so that it moves with the surface if needed.
+    private SurfacePlacement currentPlacementSurface;
+
     // Tracks whether the item being placed is a newly added item (not an existing one).
     private bool isNewItem = false;
 
@@ -182,6 +187,14 @@ public class StudioController : MonoBehaviour
             return;
         }
         studioPanel.Init();
+
+        // Provide an item data provider to the StudioPanel that looks up
+        // available items for the currently open room. This allows each room
+        // to have its own item catalogue (e.g. bedroom items vs. kitchen
+        // items) by loading a CSV named "item_{roomName}.csv" from
+        // Resources/Texts. If no matching CSV is found, the default item
+        // catalogue will be used.
+        studioPanel.OnRequestItemData = () => ItemData.GetAllForRoom(currentPrefabName);
         studioPanel.OnItemBeginDrag = HandleUIItemBeginDrag;
         studioPanel.OnBuildClick = PlaceWall;
         studioPanel.OnPlaceClick = () =>
@@ -503,10 +516,29 @@ public class StudioController : MonoBehaviour
             }
         }
 
-        room.PlaceItem(currentItem);
+        // Only register the item with the room grid if it is being placed
+        // onto a floor or wall. Items placed onto other items (e.g. tables)
+        // should not occupy the room's grid, since they sit on a separate
+        // surface that does not map to the room's floor space.
+        if (currentItem != null && currentItem.Item.PlaceType != PlaceType.Item)
+        {
+        // Register the item on the room grid if it is placed on the floor or wall.
+        if (currentItem != null && currentItem.Item.PlaceType != PlaceType.Item)
+        {
+            room.PlaceItem(currentItem);
+        }
+        }
 
         // after
+        // If the item was placed on a surface, parent it to that surface so it
+        // follows any transform changes on the parent (e.g. tables or desks).
+        if (currentItem != null && currentItem.Item.PlaceType == PlaceType.Item && currentPlacementSurface != null)
+        {
+            currentItem.transform.SetParent(currentPlacementSurface.transform, true);
+        }
         Destroy(editedItem);
+        // Reset the current placement surface for the next placement
+        currentPlacementSurface = null;
         SuspendItem suspendItem = currentItem.gameObject.GetComponent<SuspendItem>();
         suspendItem.enabled = true;
 
@@ -571,11 +603,47 @@ public class StudioController : MonoBehaviour
         if (currentItem.Type == ItemType.Horizontal)
         {
             float distance;
+            // First, project the cursor onto the floor to determine a base
+            // position. This will be used as a fallback if no placement
+            // surface is found.
             Vector3 worldPosition = ScreenToWorldOfFloor(room, item, screenPosition, offset);
             itemPostion = WorldToItemOfFloor(room, item, worldPosition, isRestricted, out distance);
             placeType = PlaceType.Floor;
 
-            if (editedItem.CanOutside && distance < 0)
+            // Attempt to detect a placement surface beneath the cursor. Cast a
+            // ray from the camera through the current mouse position. If the
+            // ray hits a collider with a SurfacePlacement component and the
+            // item can fit on that surface, compute a snapped position and
+            // switch the place type accordingly.
+            try
+            {
+                Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit, 100f))
+                {
+                    SurfacePlacement surface = hit.collider.GetComponent<SurfacePlacement>();
+                    if (surface != null && surface.CanPlace(currentItem))
+                    {
+                        Vector3 snap = surface.GetSnapPosition(hit.point, currentItem);
+                        itemPostion = snap;
+                        placeType = PlaceType.Item;
+                        // Remember which surface this item is being placed on so
+                        // that it can be parented correctly after placement.
+                        currentPlacementSurface = surface;
+                        // When placing onto a surface, disallow outside placement.
+                        editedItem.CanOutside = false;
+                    }
+                }
+            }
+            catch
+            {
+                // If any error occurs during surface detection, ignore and
+                // proceed with floor placement.
+            }
+
+            // If the item is allowed to be placed outside and the projected
+            // distance is negative, use the outside plane as before.
+            if (placeType == PlaceType.Floor && editedItem.CanOutside && distance < 0)
             {
                 worldPosition = ScreenToWorldOfOutside(room, item, screenPosition, offset);
                 itemPostion = WorldToItemOfOutside(room, item, worldPosition, isRestricted);

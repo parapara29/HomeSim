@@ -124,8 +124,14 @@ public class TutorialManager : MonoBehaviour
         /* HUD highlights */
         yield return ShowHudHighlights();
 
+
         /* Final message */
-        ShowDialogue("That is all for the tutorial! Have fun!");
+        // Inform the player about the overarching goal of the game.
+        ShowDialogue(
+            "That is all for the tutorial!\n" +
+            "Your mission is to survive 60 days in disguise. " +
+            "Keep your suspicion meter below 50% or risk being discovered. Good luck!"
+        );
         yield return WaitForClick();
         HideDialogue();
 
@@ -440,8 +446,8 @@ public class TutorialManager : MonoBehaviour
         yield return HighlightWithDialogue(
             hud.SuspicionBarTransform,
             "The suspicion meter shows how 'alien' your behaviour seems.\n" +
-            "Performing actions like overworking, staying perfectly clean without showering, or purchasing unusual items will raise suspicion.\n" +
-            "Keep this bar low to avoid drawing attention."
+            "Overworking, staying perfectly clean without showering, resting during daylight and buying odd or expensive items all raise suspicion.\n" +
+            "As suspicion climbs above 50%, each suspicious action will spike it even more. Keep this bar low to avoid drawing attention."
         );
 
         // ⑤ Agent log

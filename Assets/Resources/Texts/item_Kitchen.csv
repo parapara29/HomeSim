@@ -1,0 +1,26 @@
+name;type(h/v);size;is occupied;offset;cost
+cabinet;h;4,2,2;1;0,0.7500005,-0.360713;400
+dryer;h;2,2,2;1;0.975,1.175,0.8;280
+kitchenBar;h;2,2,1;1;1.075,1.05,0.525;150
+kitchenBarEnd;h;1,2,1;1;0.2539063,1.05,0.525;70
+kitchenBlender;h;1,1,1;1;0.3395655,0.5688,0.2727968;45
+kitchenCabinet;h;2,2,2;1;1.075,1.125,1.125;220
+kitchenCabinetCornerInner;h;2,2,2;1;1.15,1.125,1.15;260
+kitchenCabinetCornerRound;h;2,2,2;1;1.125,1.125,1.125;300
+kitchenCabinetDrawer;h;2,2,2;1;1.075,1.125,1.125;240
+kitchenCabinetUpper;h;2,2,1;1;1.075,0.975,0.4999999;120
+kitchenCabinetUpperCorner;h;1,2,1;1;0.5375,0.975,0.525;90
+kitchenCabinetUpperDouble;h;2,2,1;1;1.075,0.975,0.4999999;160
+kitchenCabinetUpperLow;h;2,1,1;1;1.075,0.4875,0.4999999;90
+kitchenCoffeeMachine;h;1,2,2;1;0.6,0.7585,0.760263;180
+kitchenFridge;h;2,5,1;1;1.075,2.3,0.6798347;380
+kitchenFridgeBuiltIn;h;2,4,2;1;1.075,2.17187,1.125;550
+kitchenFridgeLarge;h;3,5,2;1;1.3,2.3,0.6957948;700
+kitchenFridgeSmall;h;2,3,1;1;1.075,1.500616,0.6798348;220
+kitchenMicrowave;h;1,1,1;1;0.725,0.45,0.5249999;60
+kitchenSink;h;2,2,2;1;1.075,1.225,1.125;260
+kitchenStove;h;2,2,2;1;1.075,1.125,1.125;300
+kitchenStoveElectric;h;2,2,2;1;1.075,1.125,1.125;320
+toaster;h;1,1,0;1;0,0.325,0;25
+washer;h;2,2,2;1;0.975,1.175,0.7749999;300
+washerDryerStacked;h;2,5,2;1;0.975,2.35,0.7749999;520

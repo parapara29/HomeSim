@@ -165,6 +165,15 @@ public class StudioPanel : MonoBehaviour
         return buildCellViewData;
     }
 
+    /// <summary>
+    /// Optional callback used to retrieve the list of items available for the
+    /// current room. If assigned, this delegate will be invoked when the
+    /// player switches into SelectItem mode (instead of using the default
+    /// ItemData.GetAll list). The returned array should contain ItemPO
+    /// entries appropriate for the active room or context.
+    /// </summary>
+    public System.Func<ItemPO[]> OnRequestItemData { get; set; }
+
     #region Controller API
 
     public StudioMode GetMode()
@@ -184,7 +193,25 @@ public class StudioPanel : MonoBehaviour
         switch (mode)
         {
             case StudioMode.SelectItem:
-                itemCellViewData = ItemData.GetAll();
+                // If an item data provider has been assigned, use it to
+                // populate the item list for the current room. Otherwise
+                // fall back to the global item list.
+                if (OnRequestItemData != null)
+                {
+                    try
+                    {
+                        itemCellViewData = OnRequestItemData.Invoke();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"StudioPanel.SetMode: error retrieving item data: {ex.Message}");
+                        itemCellViewData = ItemData.GetAll();
+                    }
+                }
+                else
+                {
+                    itemCellViewData = ItemData.GetAll();
+                }
                 itemCellView.Refresh();
                 break;
             case StudioMode.SelectWall:

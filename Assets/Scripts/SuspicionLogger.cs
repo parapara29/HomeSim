@@ -18,7 +18,28 @@ public static class SuspicionLogger
     public static void Add(string message)
     {
         if (string.IsNullOrEmpty(message)) return;
-        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        string timestamp;
+        // Prefer in-game time if a GameClock exists. Wrap in a try/catch
+        // so that the logger continues to function if GameClock is
+        // unavailable or throws an exception. The day string from
+        // GameClock uses a friendly "Day X" format rather than a real
+        // calendar date. The time string is formatted as HH:mm.
+        try
+        {
+            var clock = GameClock.Instance;
+            if (clock != null)
+            {
+                timestamp = $"{clock.GetDayString()} {clock.GetTimeString()}";
+            }
+            else
+            {
+                timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            }
+        }
+        catch
+        {
+            timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        }
         logs.Add($"[{timestamp}] {message}");
     }
 
