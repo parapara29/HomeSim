@@ -531,6 +531,15 @@ public class StudioController : MonoBehaviour
         if (currentItem != null)
         {
             room.PlaceItem(currentItem);
+
+            // Immediately persist the room state after placing an item. Previously we
+            // deferred saving until leaving the room, which caused a bug where
+            // only the first placed furniture item was persisted. By calling
+            // SaveRoomState here, every new placement (including those on
+            // surfaces) will be recorded in PlayerPrefs. This ensures that
+            // subsequent purchases are saved correctly without requiring the
+            // player to exit the room first.
+            SaveRoomState();
         }
 
         // after
@@ -546,6 +555,10 @@ public class StudioController : MonoBehaviour
         SuspendItem suspendItem = currentItem.gameObject.GetComponent<SuspendItem>();
         suspendItem.enabled = true;
 
+        // Persist the room state again after finishing the placement to ensure
+        // any last‑moment adjustments (such as parenting) are captured.
+        SaveRoomState();
+
         ResetState();
         studioPanel.Back();
     }
@@ -554,6 +567,10 @@ public class StudioController : MonoBehaviour
     {
         if (!isItemEdited) return;
         Destroy(currentItem.gameObject);
+        // After deleting an item, persist the state so that the removal
+        // is reflected in the saved data. Without saving here, deleted
+        // furniture could reappear when the room is reloaded.
+        SaveRoomState();
 
         ResetState();
         studioPanel.Back();
@@ -803,7 +820,12 @@ public class StudioController : MonoBehaviour
             // offset back to account for the candidate's half extents.
             float snapX = (centre.x - halfX) + cellX + (itemSize.x / 2f);
             float snapZ = (centre.z - halfZ) + cellZ + (itemSize.z / 2f);
-            float snapY = centre.y + surfaceSize.y / 2f;
+            // For the Y coordinate, we want the bottom of the dragged
+            // object's bounding box to sit flush with the top of the
+            // candidate surface. Item.Position represents the centre of
+            // the object, so we add half the height of the candidate and
+            // half the height of the item to centre the item on top.
+            float snapY = centre.y + surfaceSize.y / 2f + itemSize.y / 2f;
             snappedPosition = new Vector3(snapX, snapY, snapZ);
             surface = candidate;
             return true;
@@ -1033,48 +1055,26 @@ public class StudioController : MonoBehaviour
             sideGrids = new bool[item.Size.x, item.Size.y];
             return true;
         }
+
+        Vector3Int itemSize = item.Size;
+        Vector3Int rotateSize = item.RotateSize;
+        Vector2Int bottomSize = new Vector2Int(itemSize.x, itemSize.z);
+        Vector2Int sideSize = new Vector2Int(itemSize.x, itemSize.y);
+        Direction itemDir = item.Dir;
+        int sizeX = itemSize.x;
+        int sizeY = itemSize.y;
+        int sizeZ = itemSize.z;
+        bottomGrids = new bool[sizeX, sizeZ];
+        sideGrids = new bool[sizeX, sizeY];
+
+        if (!item.CanPlaceOfType())
         {
-            Vector3Int itemSize = item.Size;
-            Vector3Int rotateSize = item.RotateSize;
-            Vector2Int bottomSize = new Vector2Int(itemSize.x, itemSize.z);
-            Vector2Int sideSize = new Vector2Int(itemSize.x, itemSize.y);
-            Direction itemDir = item.Dir;
-            int sizeX = itemSize.x;
-            int sizeY = itemSize.y;
-            int sizeZ = itemSize.z;
-            bottomGrids = new bool[sizeX, sizeZ];
-            sideGrids = new bool[sizeX, sizeY];
-
-            if (!item.CanPlaceOfType())
-            {
-                for (int i = 0; i < rotateSize.x; i++)
-                {
-                    for (int j = 0; j < rotateSize.z; j++)
-                    {
-                        Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
-                        bottomGrids[vec.x, vec.y] = false;
-                    }
-                }
-
-                for (int i = 0; i < itemSize.x; i++)
-                {
-                    for (int j = 0; j < itemSize.y; j++)
-                    {
-                        Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
-                        sideGrids[vec.x, vec.y] = false;
-                    }
-                }
-                return false;
-            }
-
-
-            // initialize all true
             for (int i = 0; i < rotateSize.x; i++)
             {
                 for (int j = 0; j < rotateSize.z; j++)
                 {
                     Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
-                    bottomGrids[vec.x, vec.y] = true;
+                    bottomGrids[vec.x, vec.y] = false;
                 }
             }
 
@@ -1083,48 +1083,69 @@ public class StudioController : MonoBehaviour
                 for (int j = 0; j < itemSize.y; j++)
                 {
                     Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
-                    sideGrids[vec.x, vec.y] = true;
-                }
-            }
-
-            if (!isRestricted || !item.IsOccupid)
-                return true;
-
-            HashSet<Vector2Int> xzGrids, xyGrids, zyGrids;
-            List<Vector3Int> conflictSpaces = room.ConflictSpace(item);
-
-            conflictSpaceToGrids(item, conflictSpaces, out xzGrids, out xyGrids, out zyGrids);
-
-            if ((xzGrids.Count + xyGrids.Count + zyGrids.Count) == 0)
-            {
-                return true;
-            }
-
-            foreach (Vector2Int grid in xzGrids)
-            {
-                Vector2Int vec = rotateBottomVector(bottomSize, itemDir, grid);
-                bottomGrids[vec.x, vec.y] = false;
-            }
-
-            if (item.Dir.Value % 4 == 0)
-            {
-                foreach (Vector2Int grid in xyGrids)
-                {
-                    Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
-                    sideGrids[vec.x, vec.y] = false;
-                }
-
-            }
-            else
-            {
-                foreach (Vector2Int grid in zyGrids)
-                {
-                    Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
                     sideGrids[vec.x, vec.y] = false;
                 }
             }
             return false;
         }
+
+
+        // initialize all true
+        for (int i = 0; i < rotateSize.x; i++)
+        {
+            for (int j = 0; j < rotateSize.z; j++)
+            {
+                Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
+                bottomGrids[vec.x, vec.y] = true;
+            }
+        }
+
+        for (int i = 0; i < itemSize.x; i++)
+        {
+            for (int j = 0; j < itemSize.y; j++)
+            {
+                Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
+                sideGrids[vec.x, vec.y] = true;
+            }
+        }
+
+        if (!isRestricted || !item.IsOccupid)
+            return true;
+
+        HashSet<Vector2Int> xzGrids, xyGrids, zyGrids;
+        List<Vector3Int> conflictSpaces = room.ConflictSpace(item);
+
+        conflictSpaceToGrids(item, conflictSpaces, out xzGrids, out xyGrids, out zyGrids);
+
+        if ((xzGrids.Count + xyGrids.Count + zyGrids.Count) == 0)
+        {
+            return true;
+        }
+
+        foreach (Vector2Int grid in xzGrids)
+        {
+            Vector2Int vec = rotateBottomVector(bottomSize, itemDir, grid);
+            bottomGrids[vec.x, vec.y] = false;
+        }
+
+        if (item.Dir.Value % 4 == 0)
+        {
+            foreach (Vector2Int grid in xyGrids)
+            {
+                Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
+                sideGrids[vec.x, vec.y] = false;
+            }
+
+        }
+        else
+        {
+            foreach (Vector2Int grid in zyGrids)
+            {
+                Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
+                sideGrids[vec.x, vec.y] = false;
+            }
+        }
+        return false;
     }
 
     private Vector2Int rotateBottomVector(Vector2Int size, Direction dir, Vector2Int coordinate)
@@ -1208,6 +1229,10 @@ public class StudioController : MonoBehaviour
             suspend.OnClick = ClickItem;
             obj.SetDir(Direction.FromValue(state.direction));
             obj.SetPosition(state.position);
+            // Restore the placement type if present; older save files will
+            // default to PlaceType.None. This allows objects placed on
+            // surfaces to skip occupying grid space.
+            obj.Item.PlaceType = (PlaceType)state.placeType;
             obj.Item.RoomPosition = roomPosition(obj.Item, room.Size, state.position);
             room.PlaceItem(obj);
         }

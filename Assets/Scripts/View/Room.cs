@@ -139,7 +139,11 @@ public class Room : MonoBehaviour
         // be saved and restored. Only update the occupancy grid if the
         // item is meant to occupy floor/wall space. Items placed onto
         // other items (PlaceType.Item) are ignored for grid occupancy.
-        items.Add(item);
+        // Avoid duplicate entries: only add the item if it's not already in the list.
+        if (!items.Contains(item))
+        {
+            items.Add(item);
+        }
 
         // Only register occupied space if both the item is marked as
         // occupying and its placement type is not Item (i.e. not on top
@@ -246,6 +250,9 @@ public class Room : MonoBehaviour
             data.prefab = obj.name;
             data.position = obj.Item.Position;
             data.direction = obj.Item.Dir.Value;
+            // Record the placement type so that items placed on surfaces
+            // can be restored properly. Cast to int for JSON serialization.
+            data.placeType = (int)obj.Item.PlaceType;
             states.Add(data);
         }
         return states;

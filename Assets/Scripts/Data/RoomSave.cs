@@ -7,6 +7,11 @@ public class ItemSaveData
     public string prefab;
     public Vector3 position;
     public int direction;
+    // The placement type of the item (0=None,1=Wall,2=Floor,3=Item). This
+    // is stored so that items placed on other objects can be correctly
+    // restored without occupying floor space. Older save files will not
+    // contain this field and will default to 0 (None).
+    public int placeType;
 }
 
 [System.Serializable]
