@@ -136,5 +136,28 @@ public class ItemData : IData<ItemData>
         Debug.LogWarning($"ItemData.GetByName: '{itemName}' not found");
         return null;
     }
+    /// <summary>
+    /// Looks up an item by name for a specific room. This first searches the
+    /// room specific catalogue loaded via <see cref="GetAllForRoom"/>. If the
+    /// item cannot be found there it falls back to the default global
+    /// catalogue used by <see cref="GetByName"/>.
+    /// </summary>
+    /// <param name="roomName">Name of the room whose catalogue should be searched.</param>
+    /// <param name="itemName">Prefab name of the item to look up.</param>
+    /// <returns>The matching <see cref="ItemPO"/> or <c>null</c> if not found.</returns>
+    public static ItemPO GetByNameForRoom(string roomName, string itemName)
+    {
+        // Search the room-specific list first (this falls back to the default
+        // list automatically if no room specific CSV exists).
+        ItemPO[] roomItems = GetAllForRoom(roomName);
+        foreach (var item in roomItems)
+        {
+            if (item.name == itemName)
+                return item;
+        }
+
+        // Fallback: search the default item list.
+        return GetByName(itemName);
+    }
 
 }

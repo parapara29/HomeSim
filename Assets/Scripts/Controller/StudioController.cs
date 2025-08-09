@@ -1202,8 +1202,14 @@ public class StudioController : MonoBehaviour
         List<ItemSaveData> states = RoomSave.Load(currentPrefabName);
         foreach (var state in states)
         {
-            ItemPO po = ItemData.GetByName(state.prefab);
-            if (po == null) continue;
+            // Look up the item using the room-specific catalogue first and
+            // fall back to the default list if necessary.
+            ItemPO po = ItemData.GetByNameForRoom(currentPrefabName, state.prefab);
+            if (po == null)
+            {
+                Debug.LogError($"StudioController.LoadRoomState: Item '{state.prefab}' not found for room '{currentPrefabName}'");
+                continue;
+            }
             GameObject itemGO = Instantiate(Resources.Load("Prefabs/Items/" + state.prefab)) as GameObject;
             ItemObject obj = itemGO.AddComponent<ItemObject>();
             obj.Init(po);
