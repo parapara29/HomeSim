@@ -61,6 +61,20 @@ public class Room : MonoBehaviour
         showWalls = new int[2];
     }
 
+    /// <summary>
+    /// Returns a copy of the list of items that are currently placed in this
+    /// room. Each entry corresponds to an ItemObject that has been added
+    /// via PlaceItem(). Use this accessor when you need to inspect the
+    /// surfaces of existing furniture for placement of smaller objects.
+    /// </summary>
+    public List<ItemObject> GetPlacedItems()
+    {
+        // Return a new list to prevent external callers from modifying the
+        // internal items collection. Note that callers should not attempt
+        // to add or remove items directly from this returned list.
+        return new List<ItemObject>(items);
+    }
+
     public void RefreshByAngle(float angle)
     {
         walls[0].Hide(angle >= 270 || angle < 90);
@@ -121,9 +135,17 @@ public class Room : MonoBehaviour
 
     public void PlaceItem(ItemObject item)
     {
+        // Always add the item to the list of placed items so that it can
+        // be saved and restored. Only update the occupancy grid if the
+        // item is meant to occupy floor/wall space. Items placed onto
+        // other items (PlaceType.Item) are ignored for grid occupancy.
         items.Add(item);
 
-        if (item.Item.IsOccupid)
+        // Only register occupied space if both the item is marked as
+        // occupying and its placement type is not Item (i.e. not on top
+        // of another object). This prevents small objects on tables from
+        // blocking floor space while still allowing them to be saved.
+        if (item.Item.IsOccupid && item.Item.PlaceType != PlaceType.Item)
         {
             int minX, maxX, minY, maxY, minZ, maxZ;
             bool success = ItemXYZ(item.Item, out minX, out maxX, out minY, out maxY, out minZ, out maxZ);
@@ -136,8 +158,6 @@ public class Room : MonoBehaviour
                 {
                     for (int z = minZ; z < maxZ; z++)
                     {
-                        // string coordinate = x + ", " + y + ", " + z;
-                        // Debug.Log(coordinate);
                         int key = x * Size.y * Size.z + y * Size.z + z;
                         if (!space.ContainsKey(key))
                             space.Add(key, new List<ItemObject>());

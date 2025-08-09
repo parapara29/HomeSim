@@ -40,10 +40,13 @@ public class StudioController : MonoBehaviour
 
     private bool initialized = false;
 
-    // Tracks the surface on which the current item will be placed when
-    // PlaceType is Item. This allows the item to be parented to the
-    // surface after placement so that it moves with the surface if needed.
-    private SurfacePlacement currentPlacementSurface;
+    // Tracks the surface (a previously placed item) on which the current
+    // item will be placed when PlaceType is Item. Items placed on a
+    // surface are parented to the surface so they move with it. This is
+    // stored as an ItemObject. We no longer rely on the SurfacePlacement
+    // component; instead, we detect suitable surfaces dynamically by
+    // inspecting other placed items in the room (see TryFindSurfaceCandidate).
+    private ItemObject currentPlacementSurface;
 
     // Tracks whether the item being placed is a newly added item (not an existing one).
     private bool isNewItem = false;
@@ -382,8 +385,12 @@ public class StudioController : MonoBehaviour
     if (room      != null) room.RefreshGrids(false);
     if (gridGroup != null) gridGroup.SetActive(false);
 
-    currentItem = null;
-    editedItem  = null;
+        currentItem = null;
+        editedItem  = null;
+        // Clear the cached placement surface so it does not carry over
+        // between editing sessions. Without resetting this, new items
+        // might incorrectly parent to an old surface.
+        currentPlacementSurface = null;
 }
 
     #region Room
@@ -516,17 +523,14 @@ public class StudioController : MonoBehaviour
             }
         }
 
-        // Only register the item with the room grid if it is being placed
-        // onto a floor or wall. Items placed onto other items (e.g. tables)
-        // should not occupy the room's grid, since they sit on a separate
-        // surface that does not map to the room's floor space.
-        if (currentItem != null && currentItem.Item.PlaceType != PlaceType.Item)
-        {
-        // Register the item on the room grid if it is placed on the floor or wall.
-        if (currentItem != null && currentItem.Item.PlaceType != PlaceType.Item)
+        // Always register the item with the room so that it can be saved
+        // later. The Room.PlaceItem method will decide whether to
+        // allocate grid space based on the item's placement type and
+        // occupancy flag. Items placed on surfaces will not consume
+        // floor/wall space but will still be stored in the room.
+        if (currentItem != null)
         {
             room.PlaceItem(currentItem);
-        }
         }
 
         // after
@@ -610,35 +614,21 @@ public class StudioController : MonoBehaviour
             itemPostion = WorldToItemOfFloor(room, item, worldPosition, isRestricted, out distance);
             placeType = PlaceType.Floor;
 
-            // Attempt to detect a placement surface beneath the cursor. Cast a
-            // ray from the camera through the current mouse position. If the
-            // ray hits a collider with a SurfacePlacement component and the
-            // item can fit on that surface, compute a snapped position and
-            // switch the place type accordingly.
-            try
+            // Attempt to detect a placement surface beneath the cursor by
+            // examining already placed items in the room. If a suitable
+            // horizontal surface is found and the item fits on it, compute
+            // a snapped position and switch the place type accordingly.
             {
-                Ray ray = Camera.main.ScreenPointToRay(screenPosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit, 100f))
+                ItemObject surfaceCandidate;
+                Vector3 snapped;
+                if (TryFindSurfaceCandidate(screenPosition, currentItem, out surfaceCandidate, out snapped))
                 {
-                    SurfacePlacement surface = hit.collider.GetComponent<SurfacePlacement>();
-                    if (surface != null && surface.CanPlace(currentItem))
-                    {
-                        Vector3 snap = surface.GetSnapPosition(hit.point, currentItem);
-                        itemPostion = snap;
-                        placeType = PlaceType.Item;
-                        // Remember which surface this item is being placed on so
-                        // that it can be parented correctly after placement.
-                        currentPlacementSurface = surface;
-                        // When placing onto a surface, disallow outside placement.
-                        editedItem.CanOutside = false;
-                    }
+                    itemPostion = snapped;
+                    placeType = PlaceType.Item;
+                    currentPlacementSurface = surfaceCandidate;
+                    // When placing onto a surface, disallow outside placement.
+                    editedItem.CanOutside = false;
                 }
-            }
-            catch
-            {
-                // If any error occurs during surface detection, ignore and
-                // proceed with floor placement.
             }
 
             // If the item is allowed to be placed outside and the projected
@@ -713,6 +703,112 @@ public class StudioController : MonoBehaviour
         }
         item.PlaceType = placeType;
         return itemPostion;
+    }
+
+    /// <summary>
+    /// Attempts to find a horizontal surface from existing placed items on
+    /// which the currently dragged item can be placed. A surface is any
+    /// horizontally oriented ItemObject whose X/Z extents are large enough
+    /// to accommodate the dragged item's rotated size. The screenPosition
+    /// is projected onto the floor to obtain a world X/Z coordinate used
+    /// to test whether the pointer lies within a candidate's top face. If
+    /// a suitable surface is found, a snapped world position is computed
+    /// aligned to the candidate's local grid and returned via out
+    /// parameters.
+    /// </summary>
+    /// <param name="screenPosition">The current cursor position in screen coordinates.</param>
+    /// <param name="newItem">The item being dragged from the UI.</param>
+    /// <param name="surface">Outputs the ItemObject surface candidate if found.</param>
+    /// <param name="snappedPosition">Outputs the snapped world position aligned to the surface.</param>
+    /// <returns>True if a valid surface and snapped position were found; otherwise false.</returns>
+    private bool TryFindSurfaceCandidate(Vector3 screenPosition, ItemObject newItem, out ItemObject surface, out Vector3 snappedPosition)
+    {
+        surface = null;
+        snappedPosition = Vector3.zero;
+
+        if (room == null || newItem == null || newItem.Item == null)
+        {
+            return false;
+        }
+
+        // Project the cursor onto the floor plane to obtain approximate
+        // world X/Z coordinates. The Y component of this position is not
+        // used for surface detection; it simply provides a stable basis
+        // for calculating local offsets on potential surfaces.
+        Vector3 projected = ScreenToWorldOfFloor(room, newItem.Item, screenPosition, Vector2.zero);
+
+        // Retrieve the list of placed items from the room. If no accessor
+        // exists, fall back to searching all ItemObjects in the scene. See
+        // Room.GetPlacedItems for implementation.
+        List<ItemObject> placedItems = null;
+        try
+        {
+            placedItems = room.GetPlacedItems();
+        }
+        catch
+        {
+            // If Room does not expose GetPlacedItems (e.g. earlier versions),
+            // search for all ItemObject instances in the scene. This is
+            // less efficient but ensures compatibility.
+            ItemObject[] all = GameObject.FindObjectsOfType<ItemObject>();
+            placedItems = new List<ItemObject>(all);
+        }
+
+        Vector3Int itemSize = newItem.Item.RotateSize;
+        foreach (var candidate in placedItems)
+        {
+            if (candidate == null || candidate == newItem || candidate.Item == null)
+                continue;
+            // Only horizontal items can act as placement surfaces
+            if (candidate.Type != ItemType.Horizontal)
+                continue;
+            // Determine the rotated size of the candidate to ensure the
+            // dragged item will fit on top. The candidate must be at
+            // least as large as the new item in both X and Z directions.
+            Vector3Int surfaceSize = candidate.Item.RotateSize;
+            if (surfaceSize.x < itemSize.x || surfaceSize.z < itemSize.z)
+                continue;
+
+            // Compute the half dimensions of the candidate in world units.
+            float halfX = surfaceSize.x / 2f;
+            float halfZ = surfaceSize.z / 2f;
+            Vector3 centre = candidate.Item.Position;
+
+            // Check if the projected pointer lies within the top surface
+            // bounds of the candidate in the X/Z plane. We ignore Y
+            // positioning here since height differences are handled when
+            // computing the snapped position.
+            if (Mathf.Abs(projected.x - centre.x) > halfX || Mathf.Abs(projected.z - centre.z) > halfZ)
+                continue;
+
+            // The pointer is within the candidate's X/Z bounds. Compute
+            // local offsets from the minimum corner of the top surface. For
+            // simplicity, assume a grid where each unit corresponds to one
+            // world unit. Adjust the offsets by half the item size to align
+            // the item centre with the grid.
+            float localX = projected.x - (centre.x - halfX);
+            float localZ = projected.z - (centre.z - halfZ);
+            int maxCellsX = surfaceSize.x;
+            int maxCellsZ = surfaceSize.z;
+
+            // Determine the cell index by rounding the local coordinate minus
+            // half the item size. Clamp to ensure the item remains fully
+            // within the candidate's surface.
+            float cellX = Mathf.Clamp(Mathf.Round(localX - itemSize.x / 2f), 0, maxCellsX - itemSize.x);
+            float cellZ = Mathf.Clamp(Mathf.Round(localZ - itemSize.z / 2f), 0, maxCellsZ - itemSize.z);
+
+            // Compute the snapped position's world coordinates. The X and Z
+            // positions align the item centre on the candidate's grid,
+            // while Y is set to the top of the candidate. Add the item
+            // offset back to account for the candidate's half extents.
+            float snapX = (centre.x - halfX) + cellX + (itemSize.x / 2f);
+            float snapZ = (centre.z - halfZ) + cellZ + (itemSize.z / 2f);
+            float snapY = centre.y + surfaceSize.y / 2f;
+            snappedPosition = new Vector3(snapX, snapY, snapZ);
+            surface = candidate;
+            return true;
+        }
+        return false;
     }
 
 
@@ -925,25 +1021,60 @@ public class StudioController : MonoBehaviour
     #region Grids
     private bool gridTypes(Item item, out bool[,] bottomGrids, out bool[,] sideGrids)
     {
-        Vector3Int itemSize = item.Size;
-        Vector3Int rotateSize = item.RotateSize;
-        Vector2Int bottomSize = new Vector2Int(itemSize.x, itemSize.z);
-        Vector2Int sideSize = new Vector2Int(itemSize.x, itemSize.y);
-        Direction itemDir = item.Dir;
-        int sizeX = itemSize.x;
-        int sizeY = itemSize.y;
-        int sizeZ = itemSize.z;
-        bottomGrids = new bool[sizeX, sizeZ];
-        sideGrids = new bool[sizeX, sizeY];
-
-        if (!item.CanPlaceOfType())
+        // If the item is being placed on top of another item, we skip
+        // conflict detection entirely. Items placed on surfaces do not
+        // occupy floor or wall space and therefore should not block
+        // placement due to existing objects. We initialise the grid arrays
+        // but return true immediately so the UI reflects that the item can
+        // be placed.
+        if (item.PlaceType == PlaceType.Item)
         {
+            bottomGrids = new bool[item.Size.x, item.Size.z];
+            sideGrids = new bool[item.Size.x, item.Size.y];
+            return true;
+        }
+        {
+            Vector3Int itemSize = item.Size;
+            Vector3Int rotateSize = item.RotateSize;
+            Vector2Int bottomSize = new Vector2Int(itemSize.x, itemSize.z);
+            Vector2Int sideSize = new Vector2Int(itemSize.x, itemSize.y);
+            Direction itemDir = item.Dir;
+            int sizeX = itemSize.x;
+            int sizeY = itemSize.y;
+            int sizeZ = itemSize.z;
+            bottomGrids = new bool[sizeX, sizeZ];
+            sideGrids = new bool[sizeX, sizeY];
+
+            if (!item.CanPlaceOfType())
+            {
+                for (int i = 0; i < rotateSize.x; i++)
+                {
+                    for (int j = 0; j < rotateSize.z; j++)
+                    {
+                        Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
+                        bottomGrids[vec.x, vec.y] = false;
+                    }
+                }
+
+                for (int i = 0; i < itemSize.x; i++)
+                {
+                    for (int j = 0; j < itemSize.y; j++)
+                    {
+                        Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
+                        sideGrids[vec.x, vec.y] = false;
+                    }
+                }
+                return false;
+            }
+
+
+            // initialize all true
             for (int i = 0; i < rotateSize.x; i++)
             {
                 for (int j = 0; j < rotateSize.z; j++)
                 {
                     Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
-                    bottomGrids[vec.x, vec.y] = false;
+                    bottomGrids[vec.x, vec.y] = true;
                 }
             }
 
@@ -952,69 +1083,48 @@ public class StudioController : MonoBehaviour
                 for (int j = 0; j < itemSize.y; j++)
                 {
                     Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
+                    sideGrids[vec.x, vec.y] = true;
+                }
+            }
+
+            if (!isRestricted || !item.IsOccupid)
+                return true;
+
+            HashSet<Vector2Int> xzGrids, xyGrids, zyGrids;
+            List<Vector3Int> conflictSpaces = room.ConflictSpace(item);
+
+            conflictSpaceToGrids(item, conflictSpaces, out xzGrids, out xyGrids, out zyGrids);
+
+            if ((xzGrids.Count + xyGrids.Count + zyGrids.Count) == 0)
+            {
+                return true;
+            }
+
+            foreach (Vector2Int grid in xzGrids)
+            {
+                Vector2Int vec = rotateBottomVector(bottomSize, itemDir, grid);
+                bottomGrids[vec.x, vec.y] = false;
+            }
+
+            if (item.Dir.Value % 4 == 0)
+            {
+                foreach (Vector2Int grid in xyGrids)
+                {
+                    Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
+                    sideGrids[vec.x, vec.y] = false;
+                }
+
+            }
+            else
+            {
+                foreach (Vector2Int grid in zyGrids)
+                {
+                    Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
                     sideGrids[vec.x, vec.y] = false;
                 }
             }
             return false;
         }
-
-
-        // initialize all true
-        for (int i = 0; i < rotateSize.x; i++)
-        {
-            for (int j = 0; j < rotateSize.z; j++)
-            {
-                Vector2Int vec = rotateBottomVector(bottomSize, itemDir, new Vector2Int(i, j));
-                bottomGrids[vec.x, vec.y] = true;
-            }
-        }
-
-        for (int i = 0; i < itemSize.x; i++)
-        {
-            for (int j = 0; j < itemSize.y; j++)
-            {
-                Vector2Int vec = rotateSideVector(sideSize, itemDir, new Vector2Int(i, j));
-                sideGrids[vec.x, vec.y] = true;
-            }
-        }
-
-        if (!isRestricted || !item.IsOccupid)
-            return true;
-
-        HashSet<Vector2Int> xzGrids, xyGrids, zyGrids;
-        List<Vector3Int> conflictSpaces = room.ConflictSpace(item);
-
-        conflictSpaceToGrids(item, conflictSpaces, out xzGrids, out xyGrids, out zyGrids);
-
-        if ((xzGrids.Count + xyGrids.Count + zyGrids.Count) == 0)
-        {
-            return true;
-        }
-
-        foreach (Vector2Int grid in xzGrids)
-        {
-            Vector2Int vec = rotateBottomVector(bottomSize, itemDir, grid);
-            bottomGrids[vec.x, vec.y] = false;
-        }
-
-        if (item.Dir.Value % 4 == 0)
-        {
-            foreach (Vector2Int grid in xyGrids)
-            {
-                Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
-                sideGrids[vec.x, vec.y] = false;
-            }
-
-        }
-        else
-        {
-            foreach (Vector2Int grid in zyGrids)
-            {
-                Vector2Int vec = rotateSideVector(sideSize, itemDir, grid);
-                sideGrids[vec.x, vec.y] = false;
-            }
-        }
-        return false;
     }
 
     private Vector2Int rotateBottomVector(Vector2Int size, Direction dir, Vector2Int coordinate)
