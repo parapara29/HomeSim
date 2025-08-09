@@ -192,6 +192,40 @@ public class LoadSceneOnClick : MonoBehaviour
         {
             float normalized = hours / 24f;
             stats.SetFatigue(Mathf.Clamp01(stats.Fatigue - normalized));
+
+            // Use reflection to interact with the GameClock if it exists
+            try
+            {
+                var clockType = System.Type.GetType("GameClock");
+                object clockInstance = null;
+                if (clockType != null)
+                {
+                    var instProp = clockType.GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    clockInstance = instProp?.GetValue(null, null);
+                    var advMethod = clockType.GetMethod("AdvanceTime", new System.Type[] { typeof(float) });
+                    if (clockInstance != null && advMethod != null)
+                    {
+                        advMethod.Invoke(clockInstance, new object[] { (float)hours });
+                    }
+                }
+                // Determine suspicion for resting during daytime
+                if (hours > 0 && clockType != null && clockInstance != null)
+                {
+                    var getHour = clockType.GetMethod("GetCurrentHour", System.Type.EmptyTypes);
+                    if (getHour != null)
+                    {
+                        int current = (int)getHour.Invoke(clockInstance, null);
+                        if (current >= 6 && current < 18)
+                        {
+                            SuspicionUtils.ApplySuspicion(stats, 0.05f, "Subject rested during daytime when most humans work.");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore reflection errors
+            }
             StatsHUD.Instance?.UpdateUI();
         }
 
