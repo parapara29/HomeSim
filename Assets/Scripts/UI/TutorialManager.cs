@@ -345,7 +345,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         // Step 2: Encourage the player to pick a bed
-        ShowDialogue("For integration with the human society, you need to look the part, search for the Capsule in the furniture list and place it in your room. Worry not, since this is the first time, you wont be charged.");
+        ShowDialogue("For now, choose a bed so you can rest in your house. Since this is the tutorial, the bed will be free.");
         yield return WaitForClick();
         HideDialogue();
 
@@ -442,6 +442,15 @@ public class TutorialManager : MonoBehaviour
             "The suspicion meter shows how 'alien' your behaviour seems.\n" +
             "Performing actions like overworking, staying perfectly clean without showering, or purchasing unusual items will raise suspicion.\n" +
             "Keep this bar low to avoid drawing attention."
+        );
+
+        // ⑤ Agent log
+        // Wait for the log button transform to be available
+        yield return new WaitUntil(() => hud.LogButtonTransform != null);
+        yield return HighlightWithDialogue(
+            hud.LogButtonTransform,
+            "This is Agent Miller's Log. It records every suspicious action you take.\n" +
+            "Keeping an eye on this log will help you understand why your suspicion meter rises and how to avoid attracting attention."
         );
     }
 

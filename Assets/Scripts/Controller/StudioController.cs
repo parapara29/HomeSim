@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Sorumi.Util;
+using UnityEngine;
 
 public class StudioController : MonoBehaviour
 {
@@ -498,7 +498,7 @@ public class StudioController : MonoBehaviour
                 // buys an item that costs more than 500 coins, raise suspicion slightly.
                 if (cost > 500)
                 {
-                    stats.ChangeSuspicion(0.1f);
+                    SuspicionUtils.ApplySuspicion(stats, 0.1f, $"Purchased a luxurious item costing {cost} coins. Unusual spending pattern.");
                 }
             }
         }

@@ -99,16 +99,23 @@ public class DayManager : MonoBehaviour
         var stats = PlayerStats.Instance;
         if (stats == null) return;
 
-        // Check for essential furniture
+        // Apply daily suspicion decay – reduce suspicion slightly each day
+        // This encourages players to behave normally over time and recover from
+        // past mistakes. The decay is small and capped at zero.
+        if (stats.Suspicion > 0f)
+        {
+            // Reduce by 2% per day
+            stats.ChangeSuspicion(-0.02f);
+        }
+
+        // Check for essential furniture using the utility to handle amplification
         if (!HasFurniture("bed"))
         {
-            stats.ChangeSuspicion(0.1f);
-            SuspicionLogger.Add("No bed detected in apartment. Subject appears neglectful.");
+            SuspicionUtils.ApplySuspicion(stats, 0.1f, "No bed detected in apartment. Subject appears neglectful.");
         }
         if (!HasFurniture("shower"))
         {
-            stats.ChangeSuspicion(0.1f);
-            SuspicionLogger.Add("No shower detected in apartment. Subject lacks basic hygiene facilities.");
+            SuspicionUtils.ApplySuspicion(stats, 0.1f, "No shower detected in apartment. Subject lacks basic hygiene facilities.");
         }
 
         // Shower timer: increment days since last shower
@@ -119,8 +126,7 @@ public class DayManager : MonoBehaviour
         {
             // Increase suspicion gradually; each additional day adds 5% suspicion
             float delta = 0.05f * (daysSinceShower - 2);
-            stats.ChangeSuspicion(delta);
-            SuspicionLogger.Add($"Subject has not showered for {daysSinceShower} days. Public nuisance.");
+            SuspicionUtils.ApplySuspicion(stats, delta, $"Subject has not showered for {daysSinceShower} days. Public nuisance.");
         }
         PlayerPrefs.SetInt(DaysSinceShowerKey, daysSinceShower);
         PlayerPrefs.Save();
@@ -138,7 +144,7 @@ public class DayManager : MonoBehaviour
         // The player may have multiple rooms saved. We'll check the two known
         // room types: the default "Room" and the "Kitchen". New room types can
         // be added here as the game expands.
-        string[] rooms = { "Room", "Kitchen", "Bathroom", };
+        string[] rooms = { "Room", "Kitchen" };
         foreach (var roomName in rooms)
         {
             var items = RoomSave.Load(roomName);

@@ -21,10 +21,16 @@ public class StatsHUD : MonoBehaviour
     float fatigueBarMaxWidth;
     float suspicionBarMaxWidth;
 
+    // Display element for showing the current time (e.g. "HH:mm").
+    Text timeText;
+
     // A button to open Agent Miller's suspicion log
     Button logButton;
     // Panel that displays the suspicion log; created lazily
     GameObject logPanel;
+
+    // Expose log button transform so tutorials can highlight it
+    public Transform LogButtonTransform { get; private set; }
     UnityEngine.Events.UnityAction<Scene, LoadSceneMode> sceneLoadedHandler;
 
     /* ───────────────────────── LIFECYCLE ───────────────────────── */
@@ -63,7 +69,8 @@ public class StatsHUD : MonoBehaviour
         rect.pivot           = new Vector2(0, 1);
         rect.anchoredPosition = startPosition;
         // expand height to accommodate the new suspicion bar
-        rect.sizeDelta       = new Vector2(160, 80);
+        // Increase the HUD height to accommodate the suspicion bar, log button and time display
+        rect.sizeDelta       = new Vector2(160, 100);
 
         /* background */
         var bg = new GameObject("Background", typeof(RectTransform), typeof(Image));
@@ -94,7 +101,7 @@ public class StatsHUD : MonoBehaviour
         logRect.anchorMax = new Vector2(0, 1);
         logRect.pivot     = new Vector2(0, 1);
         // Position it below the suspicion bar with some padding
-        logRect.anchoredPosition = new Vector2(0, -80);
+        logRect.anchoredPosition = new Vector2(0, -85);
         logRect.sizeDelta        = new Vector2(GetComponent<RectTransform>().rect.width, 18);
         var logImg = logBtnGO.GetComponent<Image>();
         logImg.color = new Color(0.2f, 0.2f, 0.4f, 0.8f);
@@ -114,6 +121,22 @@ public class StatsHUD : MonoBehaviour
         // Assign click handler
         logButtonComponent.onClick.AddListener(ToggleLogPanel);
         logButton = logBtnGO.GetComponent<Button>();
+        LogButtonTransform = logBtnGO.transform;
+
+        // Time display at the very bottom of the HUD
+        var timeGO = new GameObject("TimeText", typeof(RectTransform), typeof(Text));
+        timeGO.transform.SetParent(transform, false);
+        var timeRect = timeGO.GetComponent<RectTransform>();
+        timeRect.anchorMin = new Vector2(0, 1);
+        timeRect.anchorMax = new Vector2(0, 1);
+        timeRect.pivot     = new Vector2(0, 1);
+        timeRect.anchoredPosition = new Vector2(0, -100);
+        timeRect.sizeDelta        = new Vector2(GetComponent<RectTransform>().rect.width, 18);
+        timeText = timeGO.GetComponent<Text>();
+        timeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        timeText.color = Color.white;
+        timeText.alignment = TextAnchor.UpperLeft;
+        timeText.text = "";
     }
 
     Text CreateText(string name, Vector2 pos)
@@ -237,6 +260,37 @@ public class StatsHUD : MonoBehaviour
         {
             float w = suspicionBarMaxWidth * Mathf.Clamp01(s.Suspicion);
             suspicionBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+            // Change the colour of the suspicion bar based on thresholds
+            if (s.Suspicion < 0.5f)
+            {
+                // Yellow for low suspicion
+                suspicionBar.color = new Color(1f, 0.9f, 0.1f, 1f);
+            }
+            else if (s.Suspicion < 0.75f)
+            {
+                // Orange for medium suspicion
+                suspicionBar.color = new Color(1f, 0.5f, 0.1f, 1f);
+            }
+            else
+            {
+                // Red for high suspicion
+                suspicionBar.color = new Color(1f, 0f, 0f, 1f);
+            }
+        }
+
+        // Update the time display each time the UI refreshes
+        if (timeText != null)
+        {
+            timeText.text = System.DateTime.Now.ToString("HH:mm");
+        }
+    }
+
+    // Optionally update the time display every frame to make it responsive
+    void Update()
+    {
+        if (timeText != null)
+        {
+            timeText.text = System.DateTime.Now.ToString("HH:mm");
         }
     }
 
@@ -293,6 +347,8 @@ public class StatsHUD : MonoBehaviour
         scrollRect.anchorMax = new Vector2(0.95f, 0.95f);
         scrollRect.offsetMin = scrollRect.offsetMax = Vector2.zero;
         scrollGO.GetComponent<Image>().color = new Color(0, 0, 0, 0.2f);
+        // Add a RectMask2D so content is clipped to the bounds of the scroll area
+        scrollGO.AddComponent<RectMask2D>();
         var scroll = scrollGO.GetComponent<ScrollRect>();
         scroll.horizontal = false;
         // content container
